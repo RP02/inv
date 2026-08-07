@@ -1,0 +1,52 @@
+sku,name,category,imageUrl,notes,unit,preferredQty,vendor,vendorSku,unitPrice,currency,moq,shippingFlat,shippingPerUnit,leadDays,url,lastChecked
+CRM-HVY-36,Heavy Cream 36% 1gal,Dairy,,Base for ice cream & whipped cream,gal,4,Sysco,SY-CRM36,18.50,USD,1,15.00,0,2,,2026-07-01
+CRM-HVY-36,Heavy Cream 36% 1gal,Dairy,,Base for ice cream & whipped cream,gal,4,Restaurant Depot,RD-CRM36,16.25,USD,2,0,0,1,,2026-07-10
+CRM-HVY-36,Heavy Cream 36% 1gal,Dairy,,Base for ice cream & whipped cream,gal,4,Gordon Food,GFS-CRM36,17.40,USD,1,12.00,0,3,,2026-07-05
+MLK-WHL-1GAL,Whole Milk 1gal,Dairy,,Ice cream mix,gal,6,Sysco,SY-MLK1,5.80,USD,1,12.00,0,2,,2026-07-01
+MLK-WHL-1GAL,Whole Milk 1gal,Dairy,,Ice cream mix,gal,6,Restaurant Depot,RD-MLK1,4.95,USD,4,0,0,1,,2026-07-11
+MLK-WHL-1GAL,Whole Milk 1gal,Dairy,,Ice cream mix,gal,6,Gordon Food,GFS-MLK1,5.40,USD,2,10.00,0,2,,2026-07-03
+SUG-GRAN-50,Granulated Sugar 50lb,Dry Goods,,Ice cream & dessert sweetener,bag,1,Sysco,SY-SUG50,32.00,USD,1,18.00,0,2,,2026-07-01
+SUG-GRAN-50,Granulated Sugar 50lb,Dry Goods,,Ice cream & dessert sweetener,bag,1,Restaurant Depot,RD-SUG50,28.50,USD,2,0,0,1,,2026-07-11
+SUG-GRAN-50,Granulated Sugar 50lb,Dry Goods,,Ice cream & dessert sweetener,bag,1,Webstaurant,W-SUG50,30.25,USD,1,20.00,0,5,,2026-06-28
+EGG-YOLK-PAST,Pasteurized Egg Yolks 2lb,Dairy,,Custard / French-style ice cream,tub,2,Sysco,SY-YOLK2,14.75,USD,1,12.00,0,2,,2026-07-01
+EGG-YOLK-PAST,Pasteurized Egg Yolks 2lb,Dairy,,Custard / French-style ice cream,tub,2,Restaurant Depot,RD-YOLK2,12.90,USD,2,0,0,1,,2026-07-09
+VAN-EXT-32,Pure Vanilla Extract 32oz,Flavorings,,Base vanilla ice cream,btl,2,Sysco,SY-VAN32,48.00,USD,1,10.00,0,2,,2026-07-01
+VAN-EXT-32,Pure Vanilla Extract 32oz,Flavorings,,Base vanilla ice cream,btl,2,Webstaurant,W-VAN32,42.50,USD,2,15.00,0,4,,2026-07-06
+VAN-EXT-32,Pure Vanilla Extract 32oz,Flavorings,,Base vanilla ice cream,btl,2,Amazon Business,B0VAN32,45.99,USD,1,0,0,3,,2026-07-12
+COCOA-DUTCH-5,Dutch Cocoa Powder 5lb,Flavorings,,Chocolate ice cream & desserts,bag,1,Sysco,SY-COCOA5,36.00,USD,1,12.00,0,2,,2026-07-01
+COCOA-DUTCH-5,Dutch Cocoa Powder 5lb,Flavorings,,Chocolate ice cream & desserts,bag,1,Webstaurant,W-COCOA5,31.75,USD,1,18.00,0,4,,2026-07-04
+COCOA-DUTCH-5,Dutch Cocoa Powder 5lb,Flavorings,,Chocolate ice cream & desserts,bag,1,Restaurant Depot,RD-COCOA5,33.20,USD,2,0,0,1,,2026-07-10
+CHOC-DARK-10,Dark Chocolate Couverture 10lb,Flavorings,,Chunks / ganache / dipping,case,1,Sysco,SY-CHOC10,72.00,USD,1,15.00,0,2,,2026-07-01
+CHOC-DARK-10,Dark Chocolate Couverture 10lb,Flavorings,,Chunks / ganache / dipping,case,1,Webstaurant,W-CHOC10,64.50,USD,1,22.00,0,5,,2026-07-03
+CHOC-DARK-10,Dark Chocolate Couverture 10lb,Flavorings,,Chunks / ganache / dipping,case,1,Gordon Food,GFS-CHOC10,68.00,USD,1,14.00,0,3,,2026-06-30
+GLU-SYRUP-1GAL,Glucose Syrup 1gal,Dry Goods,,Texture / scoopability,gal,1,Sysco,SY-GLU1,22.00,USD,1,12.00,0,2,,2026-07-01
+GLU-SYRUP-1GAL,Glucose Syrup 1gal,Dry Goods,,Texture / scoopability,gal,1,Webstaurant,W-GLU1,19.40,USD,2,16.00,0,4,,2026-07-05
+STAB-GUAR-1LB,Guar Gum Stabilizer 1lb,Dry Goods,,Ice cream stabilizer,bag,1,Webstaurant,W-GUAR1,14.25,USD,1,10.00,0,4,,2026-07-02
+STAB-GUAR-1LB,Guar Gum Stabilizer 1lb,Dry Goods,,Ice cream stabilizer,bag,1,Amazon Business,B0GUAR1,12.99,USD,1,0,0,3,,2026-07-12
+STAB-GUAR-1LB,Guar Gum Stabilizer 1lb,Dry Goods,,Ice cream stabilizer,bag,1,Uline,S-GUAR1,15.50,USD,2,12.00,0,2,,2026-06-25
+WAFFLE-CONE-200,Waffle Cones 200ct,Packaging,,Serving cones,case,2,Sysco,SY-CONE200,28.00,USD,1,14.00,0,2,,2026-07-01
+WAFFLE-CONE-200,Waffle Cones 200ct,Packaging,,Serving cones,case,2,Restaurant Depot,RD-CONE200,24.50,USD,2,0,0,1,,2026-07-10
+WAFFLE-CONE-200,Waffle Cones 200ct,Packaging,,Serving cones,case,2,Webstaurant,W-CONE200,26.75,USD,3,18.00,0,5,,2026-07-04
+CUP-PAPER-8OZ,Paper Ice Cream Cups 8oz 500ct,Packaging,,Dine-in / takeout cups,case,2,Sysco,SY-CUP8,34.00,USD,1,14.00,0,2,,2026-07-01
+CUP-PAPER-8OZ,Paper Ice Cream Cups 8oz 500ct,Packaging,,Dine-in / takeout cups,case,2,Webstaurant,W-CUP8,29.99,USD,2,20.00,0,4,,2026-07-05
+CUP-PAPER-8OZ,Paper Ice Cream Cups 8oz 500ct,Packaging,,Dine-in / takeout cups,case,2,Restaurant Depot,RD-CUP8,31.50,USD,2,0,0,1,,2026-07-11
+TOP-HOTFUDGE-6,Hot Fudge Topping #10 can 6pk,Toppings,,Sundaes & desserts,case,1,Sysco,SY-FUDGE6,42.00,USD,1,15.00,0,2,,2026-07-01
+TOP-HOTFUDGE-6,Hot Fudge Topping #10 can 6pk,Toppings,,Sundaes & desserts,case,1,Restaurant Depot,RD-FUDGE6,38.25,USD,1,0,0,1,,2026-07-09
+TOP-HOTFUDGE-6,Hot Fudge Topping #10 can 6pk,Toppings,,Sundaes & desserts,case,1,Gordon Food,GFS-FUDGE6,40.00,USD,1,12.00,0,3,,2026-07-02
+TOP-CARAMEL-6,Caramel Topping #10 can 6pk,Toppings,,Sundaes & desserts,case,1,Sysco,SY-CAR6,40.00,USD,1,15.00,0,2,,2026-07-01
+TOP-CARAMEL-6,Caramel Topping #10 can 6pk,Toppings,,Sundaes & desserts,case,1,Restaurant Depot,RD-CAR6,36.50,USD,1,0,0,1,,2026-07-09
+TOP-SPRINKLE-10,Rainbow Sprinkles 10lb,Toppings,,Cones & cups,pail,1,Sysco,SY-SPR10,38.00,USD,1,12.00,0,2,,2026-07-01
+TOP-SPRINKLE-10,Rainbow Sprinkles 10lb,Toppings,,Cones & cups,pail,1,Webstaurant,W-SPR10,33.75,USD,1,16.00,0,4,,2026-07-06
+TOP-SPRINKLE-10,Rainbow Sprinkles 10lb,Toppings,,Cones & cups,pail,1,Amazon Business,B0SPR10,35.50,USD,1,0,0,3,,2026-07-12
+FRUIT-STRAW-PUREE,Strawberry Puree 6lb,Fruit,,Sorbet / swirl / toppings,pail,2,Sysco,SY-STRP6,24.00,USD,1,14.00,0,2,,2026-07-01
+FRUIT-STRAW-PUREE,Strawberry Puree 6lb,Fruit,,Sorbet / swirl / toppings,pail,2,Gordon Food,GFS-STRP6,21.50,USD,2,12.00,0,3,,2026-07-03
+FRUIT-STRAW-PUREE,Strawberry Puree 6lb,Fruit,,Sorbet / swirl / toppings,pail,2,Restaurant Depot,RD-STRP6,22.75,USD,2,0,0,1,,2026-07-10
+CHEESE-CRM-3LB,Cream Cheese 3lb,Dairy,,Cheesecake & frostings,block,4,Sysco,SY-CC3,12.50,USD,1,12.00,0,2,,2026-07-01
+CHEESE-CRM-3LB,Cream Cheese 3lb,Dairy,,Cheesecake & frostings,block,4,Restaurant Depot,RD-CC3,10.80,USD,2,0,0,1,,2026-07-11
+CHEESE-CRM-3LB,Cream Cheese 3lb,Dairy,,Cheesecake & frostings,block,4,Gordon Food,GFS-CC3,11.60,USD,2,10.00,0,2,,2026-07-04
+FLOUR-AP-50,All-Purpose Flour 50lb,Dry Goods,,Cookies / brownies / crusts,bag,1,Sysco,SY-FL50,22.00,USD,1,18.00,0,2,,2026-07-01
+FLOUR-AP-50,All-Purpose Flour 50lb,Dry Goods,,Cookies / brownies / crusts,bag,1,Restaurant Depot,RD-FL50,18.75,USD,1,0,0,1,,2026-07-11
+FLOUR-AP-50,All-Purpose Flour 50lb,Dry Goods,,Cookies / brownies / crusts,bag,1,Gordon Food,GFS-FL50,20.40,USD,1,14.00,0,3,,2026-07-02
+BUTTER-UNSALT-36,Unsalted Butter 1lb 36ct,Dairy,,Cookies / crusts / sauces,case,1,Sysco,SY-BUT36,78.00,USD,1,15.00,0,2,,2026-07-01
+BUTTER-UNSALT-36,Unsalted Butter 1lb 36ct,Dairy,,Cookies / crusts / sauces,case,1,Restaurant Depot,RD-BUT36,69.50,USD,1,0,0,1,,2026-07-10
+BUTTER-UNSALT-36,Unsalted Butter 1lb 36ct,Dairy,,Cookies / crusts / sauces,case,1,Gordon Food,GFS-BUT36,74.00,USD,1,12.00,0,3,,2026-07-03
