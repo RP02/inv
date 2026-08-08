@@ -1,6 +1,15 @@
-import { CSV_HEADERS } from "./constants";
+﻿import {
+  CATEGORY_CSV_HEADERS,
+  DEFAULT_CURRENCY,
+  DEFAULT_PREFERRED_QTY,
+  DEFAULT_UNIT,
+  INVENTORY_CSV_HEADERS,
+  UNCATEGORIZED_ID,
+  UNCATEGORIZED_NAME,
+} from "./constants";
 import { CsvRows } from "./fileSystemCsv";
-import { Catalog, InventoryItem, VendorOffer } from "./types";
+import { categoryIdFromName } from "./slugs";
+import { Catalog, Category, Item, VendorOffer } from "./types";
 
 function newId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -12,6 +21,10 @@ function num(v: string | undefined, fallback = 0): number {
   }
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function str(v: string | undefined): string {
+  return (v ?? "").trim();
 }
 
 function headerIndex(headers: string[]): Record<string, number> {
@@ -27,83 +40,166 @@ function cell(row: string[], idx: Record<string, number>, key: string): string {
   if (i === undefined) {
     return "";
   }
-  return (row[i] ?? "").trim();
+  return str(row[i]);
 }
 
-/** Parse normalized CSV (one row per vendor offer) into a catalog. */
-export function catalogFromCsvRows(rows: string[][]): Catalog {
-  if (rows.length === 0) {
-    return { items: [] };
+export function ensureUncategorized(categories: Category[]): Category[] {
+  if (categories.some((c) => c.id === UNCATEGORIZED_ID)) {
+    return categories;
+  }
+  return [{ id: UNCATEGORIZED_ID, name: UNCATEGORIZED_NAME }, ...categories];
+}
+
+/** Fresh catalog with only the default Uncategorized category. */
+export function createEmptyCatalog(): Catalog {
+  return {
+    categories: ensureUncategorized([]),
+    items: [],
+    fileName: "inventory.csv",
+    categoriesFileName: "categories.csv",
+  };
+}
+
+export function parseCategoriesFromRows(rows: string[][]): Category[] {
+  if (rows.length < 2) {
+    return ensureUncategorized([]);
+  }
+  const idx = headerIndex(rows[0]);
+  const cats: Category[] = [];
+  const seen = new Set<string>();
+
+  for (let r = 1; r < rows.length; r++) {
+    const id = cell(rows[r], idx, "id") || cell(rows[r], idx, "categoryId");
+    const name = cell(rows[r], idx, "name") || cell(rows[r], idx, "category");
+    if (!id && !name) {
+      continue;
+    }
+    const catId = id || categoryIdFromName(name);
+    if (seen.has(catId)) {
+      continue;
+    }
+    seen.add(catId);
+    cats.push({ id: catId, name: name || catId });
+  }
+
+  return ensureUncategorized(cats);
+}
+
+export function categoriesToRows(categories: Category[]): CsvRows {
+  const rows: CsvRows = [CATEGORY_CSV_HEADERS.slice()];
+  for (const c of categories) {
+    rows.push([c.id, c.name]);
+  }
+  return rows;
+}
+
+function resolveCategoryId(
+  row: string[],
+  idx: Record<string, number>,
+  categoryByName: Map<string, string>,
+  categoriesOut: Category[]
+): string {
+  const explicitId = cell(row, idx, "categoryId");
+  if (explicitId) {
+    if (!categoriesOut.some((c) => c.id === explicitId)) {
+      const legacyName = cell(row, idx, "category");
+      categoriesOut.push({
+        id: explicitId,
+        name: legacyName || explicitId,
+      });
+      categoryByName.set((legacyName || explicitId).toLowerCase(), explicitId);
+    }
+    return explicitId;
+  }
+
+  const legacyName = cell(row, idx, "category") || UNCATEGORIZED_NAME;
+  const key = legacyName.toLowerCase();
+  const existing = categoryByName.get(key);
+  if (existing) {
+    return existing;
+  }
+  const id = categoryIdFromName(legacyName);
+  categoriesOut.push({ id, name: legacyName });
+  categoryByName.set(key, id);
+  return id;
+}
+
+/** Parse inventory rows; optionally merge with known categories. */
+export function parseCatalogFromRows(
+  rows: string[][],
+  existingCategories: Category[] = []
+): Catalog {
+  const categories = ensureUncategorized([...existingCategories]);
+  const categoryByName = new Map(
+    categories.map((c) => [c.name.toLowerCase(), c.id])
+  );
+
+  if (rows.length < 2) {
+    return { categories, items: [] };
   }
 
   const idx = headerIndex(rows[0]);
-  if (idx.sku === undefined || idx.vendor === undefined) {
-    throw new Error(
-      "CSV must include at least sku and vendor columns (header row required)."
-    );
-  }
-
-  const bySku = new Map<string, InventoryItem>();
+  const byItemKey = new Map<string, Item>();
 
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];
-    if (!row || row.every((c) => !c?.trim())) {
-      continue;
-    }
-
     const sku = cell(row, idx, "sku");
-    const vendor = cell(row, idx, "vendor");
-    if (!sku || !vendor) {
+    const name = cell(row, idx, "name");
+    if (!sku && !name) {
       continue;
     }
 
-    let item = bySku.get(sku);
+    const itemId = cell(row, idx, "itemId") || cell(row, idx, "id");
+    const key = itemId || sku || name;
+    let item = byItemKey.get(key);
     if (!item) {
       item = {
-        id: newId("item"),
-        sku,
-        name: cell(row, idx, "name") || sku,
-        category: cell(row, idx, "category") || "Uncategorized",
-        imageUrl: cell(row, idx, "imageUrl") || undefined,
+        id: itemId || newId("item"),
+        sku: sku || key,
+        name: name || sku,
+        categoryId: resolveCategoryId(row, idx, categoryByName, categories),
+        primaryImageUrl:
+          cell(row, idx, "primaryImageUrl") ||
+          cell(row, idx, "primaryImage") ||
+          undefined,
         notes: cell(row, idx, "notes") || undefined,
-        unit: cell(row, idx, "unit") || "ea",
-        preferredQty: num(cell(row, idx, "preferredQty"), 1),
+        unit: cell(row, idx, "unit") || DEFAULT_UNIT,
+        preferredQty: num(cell(row, idx, "preferredQty"), DEFAULT_PREFERRED_QTY),
         offers: [],
       };
-      bySku.set(sku, item);
-    } else {
-      // Keep first non-empty item fields; allow later rows to fill blanks.
-      if (!item.name && cell(row, idx, "name")) {
-        item.name = cell(row, idx, "name");
+      byItemKey.set(key, item);
+    } else if (!item.primaryImageUrl) {
+      const primary =
+        cell(row, idx, "primaryImageUrl") || cell(row, idx, "primaryImage");
+      if (primary) {
+        item.primaryImageUrl = primary;
       }
-      if ((!item.category || item.category === "Uncategorized") && cell(row, idx, "category")) {
-        item.category = cell(row, idx, "category");
-      }
-      if (!item.imageUrl && cell(row, idx, "imageUrl")) {
-        item.imageUrl = cell(row, idx, "imageUrl");
-      }
-      if (!item.notes && cell(row, idx, "notes")) {
-        item.notes = cell(row, idx, "notes");
-      }
-      if (item.unit === "ea" && cell(row, idx, "unit")) {
-        item.unit = cell(row, idx, "unit");
-      }
-      const pq = cell(row, idx, "preferredQty");
-      if (pq) {
-        item.preferredQty = num(pq, item.preferredQty);
-      }
+    }
+
+    const vendor = cell(row, idx, "vendor");
+    if (!vendor) {
+      continue;
     }
 
     const offer: VendorOffer = {
       id: newId("offer"),
       vendor,
       vendorSku: cell(row, idx, "vendorSku") || undefined,
+      imageUrl:
+        cell(row, idx, "imageUrl") ||
+        cell(row, idx, "imagePath") ||
+        undefined,
       unitPrice: num(cell(row, idx, "unitPrice"), 0),
-      moq: num(cell(row, idx, "moq"), 1),
+      currency: cell(row, idx, "currency") || DEFAULT_CURRENCY,
+      moq: Math.max(1, num(cell(row, idx, "moq"), 1)),
       shippingFlat: num(cell(row, idx, "shippingFlat"), 0),
       shippingPerUnit: num(cell(row, idx, "shippingPerUnit"), 0),
+      notes:
+        cell(row, idx, "vendorNotes") ||
+        cell(row, idx, "offerNotes") ||
+        undefined,
       leadDays: cell(row, idx, "leadDays")
-        ? num(cell(row, idx, "leadDays"))
+        ? num(cell(row, idx, "leadDays"), 0)
         : undefined,
       url: cell(row, idx, "url") || undefined,
       lastChecked: cell(row, idx, "lastChecked") || undefined,
@@ -111,23 +207,31 @@ export function catalogFromCsvRows(rows: string[][]): Catalog {
     item.offers.push(offer);
   }
 
-  return { items: Array.from(bySku.values()) };
+  return {
+    categories: ensureUncategorized(categories),
+    items: Array.from(byItemKey.values()),
+  };
 }
 
-export function catalogToCsvRows(catalog: Catalog): CsvRows {
-  const rows: CsvRows = [CSV_HEADERS.slice()];
+export function catalogToRows(catalog: Catalog): CsvRows {
+  const rows: CsvRows = [INVENTORY_CSV_HEADERS.slice()];
+
   for (const item of catalog.items) {
     if (item.offers.length === 0) {
       rows.push([
+        item.id,
         item.sku,
         item.name,
-        item.category,
-        item.imageUrl ?? "",
+        item.categoryId,
+        item.primaryImageUrl ?? "",
         item.notes ?? "",
         item.unit,
         item.preferredQty,
         "",
         "",
+        "",
+        "",
+        DEFAULT_CURRENCY,
         "",
         "",
         "",
@@ -138,58 +242,45 @@ export function catalogToCsvRows(catalog: Catalog): CsvRows {
       ]);
       continue;
     }
-    for (const o of item.offers) {
+
+    for (const offer of item.offers) {
       rows.push([
+        item.id,
         item.sku,
         item.name,
-        item.category,
-        item.imageUrl ?? "",
+        item.categoryId,
+        item.primaryImageUrl ?? "",
         item.notes ?? "",
         item.unit,
         item.preferredQty,
-        o.vendor,
-        o.vendorSku ?? "",
-        o.unitPrice,
-        o.moq,
-        o.shippingFlat,
-        o.shippingPerUnit,
-        o.leadDays ?? "",
-        o.url ?? "",
-        o.lastChecked ?? "",
+        offer.vendor,
+        offer.vendorSku ?? "",
+        offer.imageUrl ?? "",
+        offer.unitPrice,
+        offer.currency || DEFAULT_CURRENCY,
+        offer.moq,
+        offer.shippingFlat,
+        offer.shippingPerUnit,
+        offer.notes ?? "",
+        offer.leadDays ?? "",
+        offer.url ?? "",
+        offer.lastChecked ?? "",
       ]);
     }
   }
+
   return rows;
 }
 
-export function emptyItem(): InventoryItem {
-  return {
-    id: newId("item"),
-    sku: "",
-    name: "",
-    category: "Uncategorized",
-    unit: "ea",
-    preferredQty: 1,
-    offers: [
-      {
-        id: newId("offer"),
-        vendor: "",
-        unitPrice: 0,
-        moq: 1,
-        shippingFlat: 0,
-        shippingPerUnit: 0,
-      },
-    ],
-  };
+export function categoryName(
+  catalog: Catalog,
+  categoryId: string
+): string {
+  return (
+    catalog.categories.find((c) => c.id === categoryId)?.name ??
+    categoryId ??
+    UNCATEGORIZED_NAME
+  );
 }
 
-export function emptyOffer(): VendorOffer {
-  return {
-    id: newId("offer"),
-    vendor: "",
-    unitPrice: 0,
-    moq: 1,
-    shippingFlat: 0,
-    shippingPerUnit: 0,
-  };
-}
+export { newId };
