@@ -18,8 +18,15 @@ type Props = {
 };
 
 export default function ItemDetail({ item, onClose, onNavigate }: Props) {
-  const { catalog, patchItem, removeItem, addOffer, saveOffer, removeOffer } =
-    useInventory();
+  const {
+    catalog,
+    patchItem,
+    changeItemCategory,
+    removeItem,
+    addOffer,
+    saveOffer,
+    removeOffer,
+  } = useInventory();
 
   const siblings = useMemo(() => {
     return catalog.items
@@ -164,7 +171,7 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
               <select
                 value={item.categoryId}
                 onChange={(e) =>
-                  patchItem(item.id, { categoryId: e.target.value })
+                  void changeItemCategory(item.id, e.target.value)
                 }
               >
                 {catalog.categories.map((c) => (
@@ -219,7 +226,7 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
               item={item}
               onChangeOffer={(offer) => saveOffer(item.id, offer)}
               onAddOffer={() => addOffer(item.id)}
-              onRemoveOffer={(offerId) => removeOffer(item.id, offerId)}
+              onRemoveOffer={(offerId) => void removeOffer(item.id, offerId)}
             />
           </section>
         </div>

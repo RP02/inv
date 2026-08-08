@@ -16,7 +16,7 @@ import {
   rowsToCsvString,
 } from "./fileSystemCsv";
 import { relativePrimaryImagePath, relativeVendorImagePath } from "./slugs";
-import { Catalog } from "./types";
+import { Catalog, Item } from "./types";
 
 function isAbortError(err: unknown): boolean {
   return (
@@ -54,6 +54,18 @@ export async function openProjectFolder(): Promise<FileSystemDirectoryHandle | n
     }
     throw err;
   }
+}
+
+export async function queryProjectDirPermission(
+  dir: FileSystemDirectoryHandle
+): Promise<PermissionState> {
+  return dir.queryPermission({ mode: "readwrite" });
+}
+
+export async function requestProjectDirPermission(
+  dir: FileSystemDirectoryHandle
+): Promise<boolean> {
+  return ensurePermission(dir, "readwrite");
 }
 
 async function readCsvFromDir(
@@ -249,6 +261,134 @@ export function isRelativeImagePath(value: string | undefined): boolean {
     value.startsWith("./") ||
     !value.includes("://")
   );
+}
+
+/** Rewrite images/{oldCategory}/… → images/{newCategory}/… for an item. */
+export function rewriteItemImageCategoryPaths(
+  item: Item,
+  newCategoryId: string
+): Item {
+  if (item.categoryId === newCategoryId) {
+    return { ...item, categoryId: newCategoryId };
+  }
+
+  const rewrite = (path: string | undefined): string | undefined => {
+    if (!path || !isRelativeImagePath(path)) {
+      return path;
+    }
+    const parts = path.replace(/\\/g, "/").split("/").filter(Boolean);
+    if (
+      parts[0] === IMAGES_DIR &&
+      parts.length >= 4 &&
+      parts[2] === item.id
+    ) {
+      parts[1] = newCategoryId;
+      return parts.join("/");
+    }
+    return path;
+  };
+
+  return {
+    ...item,
+    categoryId: newCategoryId,
+    primaryImageUrl: rewrite(item.primaryImageUrl),
+    offers: item.offers.map((o) => ({
+      ...o,
+      imageUrl: rewrite(o.imageUrl),
+    })),
+  };
+}
+
+export async function deleteProjectFile(
+  root: FileSystemDirectoryHandle,
+  relativePath: string
+): Promise<boolean> {
+  const parts = relativePath.replace(/\\/g, "/").split("/").filter(Boolean);
+  if (parts.length === 0) {
+    return false;
+  }
+  const fileName = parts[parts.length - 1];
+  const dirParts = parts.slice(0, -1);
+  try {
+    let current = root;
+    for (const segment of dirParts) {
+      current = await current.getDirectoryHandle(segment);
+    }
+    await current.removeEntry(fileName);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function tryRemoveItemImageDir(
+  root: FileSystemDirectoryHandle,
+  categoryId: string,
+  itemId: string
+): Promise<void> {
+  try {
+    const images = await root.getDirectoryHandle(IMAGES_DIR);
+    const cat = await images.getDirectoryHandle(categoryId);
+    await cat.removeEntry(itemId, { recursive: true });
+  } catch {
+    // ignore missing / non-empty
+  }
+}
+
+export async function moveProjectFile(
+  root: FileSystemDirectoryHandle,
+  fromPath: string,
+  toPath: string
+): Promise<boolean> {
+  if (fromPath === toPath) {
+    return true;
+  }
+  const src = await resolveFileHandle(root, fromPath, false);
+  if (!src) {
+    return false;
+  }
+  if (!(await ensurePermission(src, "read"))) {
+    return false;
+  }
+  const blob = await (await src.getFile()).arrayBuffer();
+  await writeBlobAtPath(root, toPath, new Blob([blob]));
+  await deleteProjectFile(root, fromPath);
+  return true;
+}
+
+/** Move on-disk images and return the item with updated category + paths. */
+export async function relocateItemImages(
+  root: FileSystemDirectoryHandle,
+  item: Item,
+  newCategoryId: string
+): Promise<Item> {
+  const rewritten = rewriteItemImageCategoryPaths(item, newCategoryId);
+  if (item.categoryId === newCategoryId) {
+    return rewritten;
+  }
+
+  const pairs: Array<{ from?: string; to?: string }> = [
+    { from: item.primaryImageUrl, to: rewritten.primaryImageUrl },
+    ...item.offers.map((o, i) => ({
+      from: o.imageUrl,
+      to: rewritten.offers[i]?.imageUrl,
+    })),
+  ];
+
+  for (const { from, to } of pairs) {
+    if (
+      from &&
+      to &&
+      from !== to &&
+      isRelativeImagePath(from) &&
+      isRelativeImagePath(to)
+    ) {
+      await moveProjectFile(root, from, to);
+    }
+  }
+
+  await tryRemoveItemImageDir(root, item.categoryId, item.id);
+  return rewritten;
 }
 
 export { isFileSystemAccessSupported };

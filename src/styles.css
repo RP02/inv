@@ -63,6 +63,32 @@ button.btn-primary {
   color: #fff;
 }
 
+button.btn-save-dirty {
+  background: #c2410c;
+  border-color: #c2410c;
+  color: #fff;
+  font-weight: 700;
+}
+
+button.btn-save-dirty:hover {
+  filter: brightness(1.05);
+}
+
+.save-toast {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  background: #1f2937;
+  color: #fff;
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
 button.pill {
   border-radius: 999px;
   padding: 0.4rem 0.85rem;
@@ -758,9 +784,16 @@ button.pill.active {
   color: var(--text);
 }
 
+.project-gate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
 .project-gate-cta {
   width: 100%;
-  margin-top: 0.5rem;
+  margin-top: 0;
   min-height: 48px;
   font-size: 1rem;
 }

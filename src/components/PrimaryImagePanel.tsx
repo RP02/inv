@@ -57,7 +57,7 @@ export default function PrimaryImagePanel({ item }: Props) {
         }
         onFile={onFile}
         onClear={
-          hasPrimary ? () => clearPrimaryImage(item.id) : undefined
+          hasPrimary ? () => void clearPrimaryImage(item.id) : undefined
         }
         onPreview={
           showingSomething

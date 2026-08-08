@@ -7,8 +7,13 @@ import ProjectGate from "./ProjectGate";
 import Toolbar from "./Toolbar";
 
 export default function Dashboard() {
-  const { catalog, selectedItemId, setSelectedItemId, hasProjectFolder } =
-    useInventory();
+  const {
+    catalog,
+    selectedItemId,
+    setSelectedItemId,
+    hasProjectFolder,
+    folderBootstrapping,
+  } = useInventory();
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<string>("All");
 
@@ -46,13 +51,26 @@ export default function Dashboard() {
 
   const selected = catalog.items.find((i) => i.id === selectedItemId) ?? null;
 
+  if (folderBootstrapping) {
+    return (
+      <div className="project-gate">
+        <div className="project-gate-card">
+          <h1>inv</h1>
+          <p>Reconnecting project folder…</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!hasProjectFolder) {
     return <ProjectGate />;
   }
 
   return (
     <div className="app-shell">
-      <Toolbar />
+      <Toolbar
+        filterCategoryId={categoryId === "All" ? undefined : categoryId}
+      />
 
       <div className="filters">
         <input

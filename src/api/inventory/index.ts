@@ -7,4 +7,5 @@ export * from "./imageUtils";
 export * from "./inventoryStore";
 export * from "./inventoryMutations";
 export * from "./projectFolder";
+export * from "./projectHandleStore";
 export * from "./slugs";

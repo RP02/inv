@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default function VendorImageCell({ item, offer, onChange }: Props) {
-  const { uploadOfferImage, resolveImageSrc } = useInventory();
+  const { uploadOfferImage, clearOfferImage, resolveImageSrc } = useInventory();
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const hasImage = isUsableImageRef(offer.imageUrl);
@@ -50,7 +50,7 @@ export default function VendorImageCell({ item, offer, onChange }: Props) {
           />
         }
         onFile={onFile}
-        onClear={() => onChange({ ...offer, imageUrl: undefined })}
+        onClear={() => void clearOfferImage(item, offer)}
         onPreview={() => void openPreview()}
       />
       {preview ? (
