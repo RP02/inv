@@ -21,14 +21,10 @@ import {
   deleteOffer,
   fileToResizedDataUrl,
   processImageFile,
-  isFileSystemAccessSupported,
   isRelativeImagePath,
   loadCatalogFromProjectFolder,
   loadCatalogFromStorage,
-  openCsvFile,
   openProjectFolder,
-  parseCatalogFromRows,
-  openCsvViaInput,
   readProjectFileAsObjectUrl,
   renameCategory,
   saveCatalogToProjectFolder,
@@ -50,7 +46,6 @@ type InventoryContextValue = {
   selectedItemId: string | null;
   setSelectedItemId: (id: string | null) => void;
   openFolder: () => Promise<void>;
-  importCsv: () => Promise<void>;
   saveCsv: () => Promise<void>;
   addItem: () => void;
   removeItem: (itemId: string) => void;
@@ -128,45 +123,6 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     const loaded = await loadCatalogFromProjectFolder(dir);
     replaceCatalog(loaded, false);
   }, [replaceCatalog]);
-
-  const importCsv = useCallback(async () => {
-    if (!dirHandleRef.current) {
-      alert("Open a project folder first, then import a CSV into that project.");
-      return;
-    }
-
-    const projectName = dirHandleRef.current.name;
-    if (isFileSystemAccessSupported()) {
-      const result = await openCsvFile();
-      if (!result) {
-        return;
-      }
-      replaceCatalog(
-        {
-          ...parseCatalogFromRows(result.rows, catalog.categories),
-          fileName: catalog.fileName || "inventory.csv",
-          categoriesFileName: catalog.categoriesFileName || "categories.csv",
-          projectName,
-        },
-        true
-      );
-      return;
-    }
-
-    const result = await openCsvViaInput();
-    if (!result) {
-      return;
-    }
-    replaceCatalog(
-      {
-        ...parseCatalogFromRows(result.rows, catalog.categories),
-        fileName: catalog.fileName || "inventory.csv",
-        categoriesFileName: catalog.categoriesFileName || "categories.csv",
-        projectName,
-      },
-      true
-    );
-  }, [catalog.categories, catalog.categoriesFileName, catalog.fileName, replaceCatalog]);
 
   const saveCsv = useCallback(async () => {
     if (!dirHandleRef.current) {
@@ -351,7 +307,6 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       selectedItemId,
       setSelectedItemId,
       openFolder,
-      importCsv,
       saveCsv,
       addItem,
       removeItem,
@@ -374,7 +329,6 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       hasProjectFolder,
       selectedItemId,
       openFolder,
-      importCsv,
       saveCsv,
       addItem,
       removeItem,

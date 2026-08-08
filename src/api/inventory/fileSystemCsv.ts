@@ -99,33 +99,6 @@ function isAbortError(err: unknown): boolean {
   );
 }
 
-export async function openCsvFile(): Promise<{
-  handle: FileSystemFileHandle;
-  rows: string[][];
-  name: string;
-} | null> {
-  if (!window.showOpenFilePicker) {
-    return null;
-  }
-  try {
-    const [handle] = await window.showOpenFilePicker({
-      multiple: false,
-      types: csvPickerTypes,
-    });
-    if (!(await ensurePermission(handle, "read"))) {
-      throw new Error("Permission to read the file was denied.");
-    }
-    const file = await handle.getFile();
-    const text = await file.text();
-    return { handle, rows: parseCsvText(text), name: handle.name };
-  } catch (err: unknown) {
-    if (isAbortError(err)) {
-      return null;
-    }
-    throw err;
-  }
-}
-
 export async function saveCsvToHandle(
   handle: FileSystemFileHandle,
   rows: CsvRows
@@ -171,24 +144,4 @@ export function downloadCsv(rows: CsvRows, filename: string): void {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-/** Fallback open via hidden file input. */
-export function openCsvViaInput(): Promise<{ rows: string[][]; name: string } | null> {
-  return new Promise((resolve) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".csv,text/csv";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) {
-        resolve(null);
-        return;
-      }
-      const text = await file.text();
-      resolve({ rows: parseCsvText(text), name: file.name });
-    };
-    input.oncancel = () => resolve(null);
-    input.click();
-  });
 }

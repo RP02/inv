@@ -4,7 +4,6 @@ import CategoriesModal from "./CategoriesModal";
 
 export default function Toolbar() {
   const {
-    importCsv,
     saveCsv,
     addItem,
     openFolder,
@@ -71,9 +70,6 @@ export default function Toolbar() {
           <div className={showMore ? "toolbar-more open" : "toolbar-more"}>
             <button type="button" onClick={() => void openFolder()}>
               Switch folder
-            </button>
-            <button type="button" onClick={() => void importCsv()}>
-              Import CSV
             </button>
           </div>
         </div>

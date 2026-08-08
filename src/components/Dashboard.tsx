@@ -79,7 +79,7 @@ export default function Dashboard() {
 
       {filtered.length === 0 ? (
         <p className="empty">
-          No items yet. Use Add Item, or Import CSV into this project folder.
+          No items yet. Use Add Item to create one.
         </p>
       ) : (
         <div className="item-grid">
