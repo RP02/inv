@@ -1,4 +1,5 @@
 import { STORAGE_KEY } from "./constants";
+import { ensureUncategorized } from "./csvInventory";
 import { Catalog } from "./types";
 
 export function loadCatalogFromStorage(): Catalog | null {
@@ -11,7 +12,18 @@ export function loadCatalogFromStorage(): Catalog | null {
     if (!parsed || !Array.isArray(parsed.items)) {
       return null;
     }
-    return parsed;
+    return {
+      ...parsed,
+      categories: ensureUncategorized(parsed.categories ?? []),
+      items: parsed.items.map((item) => ({
+        ...item,
+        // migrate old catalogs that used category: string
+        categoryId:
+          item.categoryId ||
+          (item as { category?: string }).category ||
+          "cat_uncategorized",
+      })),
+    };
   } catch {
     return null;
   }

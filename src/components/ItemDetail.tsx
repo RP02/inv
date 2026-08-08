@@ -1,5 +1,7 @@
+import { categoryName } from "../api/inventory";
 import { Item } from "../api/inventory/types";
 import { useInventory } from "../context/InventoryContext";
+import PrimaryImagePanel from "./PrimaryImagePanel";
 import VendorComparisonTable from "./VendorComparisonTable";
 
 type Props = {
@@ -8,7 +10,7 @@ type Props = {
 };
 
 export default function ItemDetail({ item, onClose }: Props) {
-  const { patchItem, removeItem, addOffer, saveOffer, removeOffer } =
+  const { catalog, patchItem, removeItem, addOffer, saveOffer, removeOffer } =
     useInventory();
 
   return (
@@ -37,13 +39,10 @@ export default function ItemDetail({ item, onClose }: Props) {
 
         <div className="detail-body">
           <section className="product-panel">
-            <div className="image-placeholder">
-              {item.imageUrl ? (
-                <img src={item.imageUrl} alt={item.name} />
-              ) : (
-                <span>No image</span>
-              )}
-            </div>
+            <label>
+              Item id
+              <input type="text" value={item.id} readOnly />
+            </label>
             <label>
               SKU
               <input
@@ -62,14 +61,26 @@ export default function ItemDetail({ item, onClose }: Props) {
             </label>
             <label>
               Category
-              <input
-                type="text"
-                value={item.category}
+              <select
+                value={item.categoryId}
                 onChange={(e) =>
-                  patchItem(item.id, { category: e.target.value })
+                  patchItem(item.id, { categoryId: e.target.value })
                 }
-              />
+              >
+                {catalog.categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <span className="field-hint">
+                id: {item.categoryId} (
+                {categoryName(catalog, item.categoryId)})
+              </span>
             </label>
+
+            <PrimaryImagePanel item={item} />
+
             <label>
               Unit
               <input
@@ -88,18 +99,6 @@ export default function ItemDetail({ item, onClose }: Props) {
                 onChange={(e) =>
                   patchItem(item.id, {
                     preferredQty: Math.max(1, Number(e.target.value) || 1),
-                  })
-                }
-              />
-            </label>
-            <label>
-              Image URL
-              <input
-                type="text"
-                value={item.imageUrl ?? ""}
-                onChange={(e) =>
-                  patchItem(item.id, {
-                    imageUrl: e.target.value || undefined,
                   })
                 }
               />

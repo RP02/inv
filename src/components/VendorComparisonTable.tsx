@@ -1,5 +1,6 @@
 import { computeItemCosts, formatMoney } from "../api/inventory";
 import { Item, VendorOffer } from "../api/inventory/types";
+import VendorImageCell from "./VendorImageCell";
 
 type Props = {
   item: Item;
@@ -42,12 +43,16 @@ export default function VendorComparisonTable({
         </button>
       </div>
       <p className="hint">
-        Effective cost uses order qty = max(preferred qty, MOQ), then unit price
-        + shipping flat + shipping/unit.
+        Photos save under{" "}
+        <code>
+          images/{item.categoryId}/{item.id}/
+        </code>{" "}
+        when a project folder is open.
       </p>
       <table className="vendor-table">
         <thead>
           <tr>
+            <th>Photo</th>
             <th>Vendor</th>
             <th>Unit price</th>
             <th>MOQ</th>
@@ -62,7 +67,7 @@ export default function VendorComparisonTable({
         <tbody>
           {item.offers.length === 0 ? (
             <tr>
-              <td colSpan={9}>No vendor offers yet.</td>
+              <td colSpan={10}>No vendor offers yet.</td>
             </tr>
           ) : (
             item.offers.map((offer) => {
@@ -72,6 +77,13 @@ export default function VendorComparisonTable({
                   key={offer.id}
                   className={cost?.isBestValue ? "best-value" : undefined}
                 >
+                  <td>
+                    <VendorImageCell
+                      item={item}
+                      offer={offer}
+                      onChange={onChangeOffer}
+                    />
+                  </td>
                   <td>
                     <input
                       type="text"

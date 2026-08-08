@@ -1,13 +1,19 @@
-import { DEFAULT_CURRENCY, DEFAULT_PREFERRED_QTY, DEFAULT_UNIT } from "./constants";
+import {
+  DEFAULT_CURRENCY,
+  DEFAULT_PREFERRED_QTY,
+  DEFAULT_UNIT,
+  UNCATEGORIZED_ID,
+} from "./constants";
 import { newId } from "./csvInventory";
-import { Catalog, Item, VendorOffer } from "./types";
+import { categoryIdFromName } from "./slugs";
+import { Catalog, Category, Item, VendorOffer } from "./types";
 
-export function createEmptyItem(): Item {
+export function createEmptyItem(categoryId = UNCATEGORIZED_ID): Item {
   return {
     id: newId("item"),
     sku: "",
     name: "New item",
-    category: "Uncategorized",
+    categoryId,
     unit: DEFAULT_UNIT,
     preferredQty: DEFAULT_PREFERRED_QTY,
     offers: [createEmptyOffer()],
@@ -96,5 +102,65 @@ export function deleteOffer(
         offers: item.offers.filter((o) => o.id !== offerId),
       };
     }),
+  };
+}
+
+export function addCategory(catalog: Catalog, name: string): Catalog {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return catalog;
+  }
+  const id = categoryIdFromName(trimmed);
+  if (catalog.categories.some((c) => c.id === id)) {
+    // If id collision, keep unique with suffix
+    const unique = `${id}_${Math.random().toString(36).slice(2, 6)}`;
+    const cat: Category = { id: unique, name: trimmed };
+    return { ...catalog, categories: [...catalog.categories, cat] };
+  }
+  if (
+    catalog.categories.some(
+      (c) => c.name.toLowerCase() === trimmed.toLowerCase()
+    )
+  ) {
+    return catalog;
+  }
+  return {
+    ...catalog,
+    categories: [...catalog.categories, { id, name: trimmed }],
+  };
+}
+
+export function renameCategory(
+  catalog: Catalog,
+  categoryId: string,
+  name: string
+): Catalog {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return catalog;
+  }
+  return {
+    ...catalog,
+    categories: catalog.categories.map((c) =>
+      c.id === categoryId ? { ...c, name: trimmed } : c
+    ),
+  };
+}
+
+export function deleteCategory(
+  catalog: Catalog,
+  categoryId: string
+): Catalog {
+  if (categoryId === UNCATEGORIZED_ID) {
+    return catalog;
+  }
+  return {
+    ...catalog,
+    categories: catalog.categories.filter((c) => c.id !== categoryId),
+    items: catalog.items.map((item) =>
+      item.categoryId === categoryId
+        ? { ...item, categoryId: UNCATEGORIZED_ID }
+        : item
+    ),
   };
 }

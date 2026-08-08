@@ -12,35 +12,48 @@ import {
   Catalog,
   Item,
   VendorOffer,
+  addCategory,
   catalogToRows,
+  categoriesToRows,
+  createEmptyCatalog,
   createEmptyItem,
   createEmptyOffer,
+  deleteCategory,
   deleteItem,
   deleteOffer,
   downloadCsv,
-  getMockCatalog,
+  fileToResizedDataUrl,
+  processImageFile,
   isFileSystemAccessSupported,
+  isRelativeImagePath,
+  loadCatalogFromProjectFolder,
   loadCatalogFromStorage,
   openCsvFile,
+  openProjectFolder,
   parseCatalogFromRows,
   pickCsvViaInput,
+  readProjectFileAsObjectUrl,
+  renameCategory,
+  saveCatalogToProjectFolder,
   saveCatalogToStorage,
-  saveCsvAs,
-  saveCsvToHandle,
   updateItemFields,
   upsertItem,
   upsertOffer,
+  writePrimaryImageToProject,
+  writeVendorImageToProject,
 } from "../api/inventory";
 
 type InventoryContextValue = {
   catalog: Catalog;
   dirty: boolean;
   fileName: string;
+  projectLabel: string;
+  hasProjectFolder: boolean;
   selectedItemId: string | null;
   setSelectedItemId: (id: string | null) => void;
+  openFolder: () => Promise<void>;
   importCsv: () => Promise<void>;
   saveCsv: () => Promise<void>;
-  loadMock: () => void;
   addItem: () => void;
   removeItem: (itemId: string) => void;
   patchItem: (itemId: string, patch: Partial<Item>) => void;
@@ -48,19 +61,33 @@ type InventoryContextValue = {
   addOffer: (itemId: string) => void;
   saveOffer: (itemId: string, offer: VendorOffer) => void;
   removeOffer: (itemId: string, offerId: string) => void;
+  createCategory: (name: string) => void;
+  updateCategoryName: (categoryId: string, name: string) => void;
+  removeCategory: (categoryId: string) => void;
+  resolveImageSrc: (imageUrl: string | undefined) => Promise<string | null>;
+  uploadOfferImage: (
+    item: Item,
+    offer: VendorOffer,
+    file: File
+  ) => Promise<void>;
+  uploadPrimaryImage: (item: Item, file: File) => Promise<void>;
+  clearPrimaryImage: (itemId: string) => void;
 };
 
 const InventoryContext = createContext<InventoryContextValue | null>(null);
 
 function initialCatalog(): Catalog {
-  return loadCatalogFromStorage() ?? getMockCatalog();
+  return loadCatalogFromStorage() ?? createEmptyCatalog();
 }
 
 export function InventoryProvider({ children }: { children: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog>(initialCatalog);
   const [dirty, setDirty] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [hasProjectFolder, setHasProjectFolder] = useState(false);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
+  const dirHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
+  const objectUrlCache = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     saveCatalogToStorage(catalog);
@@ -78,10 +105,46 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [dirty]);
 
+  useEffect(() => {
+    return () => {
+      for (const url of objectUrlCache.current.values()) {
+        URL.revokeObjectURL(url);
+      }
+      objectUrlCache.current.clear();
+    };
+  }, []);
+
   const replaceCatalog = useCallback((next: Catalog, markDirty: boolean) => {
     setCatalog(next);
     setDirty(markDirty);
   }, []);
+
+  const bindProjectFolder = useCallback(
+    (dir: FileSystemDirectoryHandle) => {
+      dirHandleRef.current = dir;
+      fileHandleRef.current = null;
+      setHasProjectFolder(true);
+      setCatalog((c) => ({
+        ...c,
+        projectName: dir.name,
+        fileName: c.fileName || "inventory.csv",
+        categoriesFileName: c.categoriesFileName || "categories.csv",
+      }));
+    },
+    []
+  );
+
+  const openFolder = useCallback(async () => {
+    const dir = await openProjectFolder();
+    if (!dir) {
+      return;
+    }
+    dirHandleRef.current = dir;
+    fileHandleRef.current = null;
+    setHasProjectFolder(true);
+    const loaded = await loadCatalogFromProjectFolder(dir);
+    replaceCatalog(loaded, false);
+  }, [replaceCatalog]);
 
   const importCsv = useCallback(async () => {
     if (isFileSystemAccessSupported()) {
@@ -90,8 +153,14 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         return;
       }
       fileHandleRef.current = result.handle;
+      dirHandleRef.current = null;
+      setHasProjectFolder(false);
       replaceCatalog(
-        { ...parseCatalogFromRows(result.rows), fileName: result.name },
+        {
+          ...parseCatalogFromRows(result.rows, catalog.categories),
+          fileName: result.name,
+          projectName: undefined,
+        },
         false
       );
       return;
@@ -102,47 +171,67 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       return;
     }
     fileHandleRef.current = null;
+    dirHandleRef.current = null;
+    setHasProjectFolder(false);
     replaceCatalog(
-      { ...parseCatalogFromRows(result.rows), fileName: result.name },
+      {
+        ...parseCatalogFromRows(result.rows, catalog.categories),
+        fileName: result.name,
+        projectName: undefined,
+      },
       false
     );
-  }, [replaceCatalog]);
+  }, [catalog.categories, replaceCatalog]);
 
   const saveCsv = useCallback(async () => {
-    const rows = catalogToRows(catalog);
-    const suggested = catalog.fileName || "inventory.csv";
-
-    if (fileHandleRef.current) {
-      await saveCsvToHandle(fileHandleRef.current, rows);
+    // Preferred path: write inventory.csv + categories.csv into the open project folder.
+    if (dirHandleRef.current) {
+      await saveCatalogToProjectFolder(dirHandleRef.current, catalog);
       setDirty(false);
       return;
     }
 
-    if (isFileSystemAccessSupported()) {
-      const saved = await saveCsvAs(rows, suggested);
-      if (saved) {
-        fileHandleRef.current = saved.handle;
-        setCatalog((c) => ({ ...c, fileName: saved.name }));
-        setDirty(false);
+    // No folder open — ask before using browser Downloads.
+    const openInstead = window.confirm(
+      "No project folder is open.\n\n" +
+        "Click OK to choose a folder and save inventory.csv + categories.csv there " +
+        "(recommended for images).\n\n" +
+        "Click Cancel to download both CSVs to your browser Downloads folder instead."
+    );
+
+    if (openInstead) {
+      const dir = await openProjectFolder();
+      if (!dir) {
         return;
       }
+      bindProjectFolder(dir);
+      await saveCatalogToProjectFolder(dir, {
+        ...catalog,
+        projectName: dir.name,
+        fileName: catalog.fileName || "inventory.csv",
+        categoriesFileName: catalog.categoriesFileName || "categories.csv",
+      });
+      setDirty(false);
+      return;
     }
 
-    downloadCsv(rows, suggested);
+    downloadCsv(catalogToRows(catalog), catalog.fileName || "inventory.csv");
+    downloadCsv(
+      categoriesToRows(catalog.categories),
+      catalog.categoriesFileName || "categories.csv"
+    );
     setDirty(false);
-  }, [catalog]);
-
-  const loadMock = useCallback(() => {
-    fileHandleRef.current = null;
-    replaceCatalog(getMockCatalog(), false);
-  }, [replaceCatalog]);
+  }, [bindProjectFolder, catalog]);
 
   const addItem = useCallback(() => {
-    const item = createEmptyItem();
+    const defaultCat =
+      catalog.categories.find((c) => c.id !== "cat_uncategorized")?.id ??
+      "cat_uncategorized";
+    const item = createEmptyItem(defaultCat);
     setCatalog((c) => upsertItem(c, item));
     setSelectedItemId(item.id);
     setDirty(true);
-  }, []);
+  }, [catalog.categories]);
 
   const removeItem = useCallback((itemId: string) => {
     setCatalog((c) => deleteItem(c, itemId));
@@ -176,16 +265,139 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     setDirty(true);
   }, []);
 
+  const createCategory = useCallback((name: string) => {
+    setCatalog((c) => addCategory(c, name));
+    setDirty(true);
+  }, []);
+
+  const updateCategoryName = useCallback((categoryId: string, name: string) => {
+    setCatalog((c) => renameCategory(c, categoryId, name));
+    setDirty(true);
+  }, []);
+
+  const removeCategory = useCallback((categoryId: string) => {
+    setCatalog((c) => deleteCategory(c, categoryId));
+    setDirty(true);
+  }, []);
+
+  const resolveImageSrc = useCallback(
+    async (imageUrl: string | undefined): Promise<string | null> => {
+      if (!imageUrl) {
+        return null;
+      }
+      if (
+        imageUrl.startsWith("data:") ||
+        imageUrl.startsWith("http://") ||
+        imageUrl.startsWith("https://")
+      ) {
+        return imageUrl;
+      }
+      if (!isRelativeImagePath(imageUrl) || !dirHandleRef.current) {
+        return null;
+      }
+      const cached = objectUrlCache.current.get(imageUrl);
+      if (cached) {
+        return cached;
+      }
+      const url = await readProjectFileAsObjectUrl(
+        dirHandleRef.current,
+        imageUrl
+      );
+      if (url) {
+        objectUrlCache.current.set(imageUrl, url);
+      }
+      return url;
+    },
+    []
+  );
+
+  const bustImageCache = useCallback((path: string) => {
+    const old = objectUrlCache.current.get(path);
+    if (old) {
+      URL.revokeObjectURL(old);
+      objectUrlCache.current.delete(path);
+    }
+  }, []);
+
+  const uploadOfferImage = useCallback(
+    async (item: Item, offer: VendorOffer, file: File) => {
+      if (dirHandleRef.current) {
+        const processed = await processImageFile(file);
+        const relativePath = await writeVendorImageToProject(
+          dirHandleRef.current,
+          item.categoryId,
+          item.id,
+          offer.vendor || "vendor",
+          offer.id,
+          processed.blob,
+          processed.ext
+        );
+        bustImageCache(relativePath);
+        setCatalog((c) =>
+          upsertOffer(c, item.id, { ...offer, imageUrl: relativePath })
+        );
+        setDirty(true);
+        return;
+      }
+
+      const dataUrl = await fileToResizedDataUrl(file);
+      setCatalog((c) =>
+        upsertOffer(c, item.id, { ...offer, imageUrl: dataUrl })
+      );
+      setDirty(true);
+    },
+    [bustImageCache]
+  );
+
+  const uploadPrimaryImage = useCallback(
+    async (item: Item, file: File) => {
+      if (dirHandleRef.current) {
+        const processed = await processImageFile(file);
+        const relativePath = await writePrimaryImageToProject(
+          dirHandleRef.current,
+          item.categoryId,
+          item.id,
+          processed.blob,
+          processed.ext
+        );
+        bustImageCache(relativePath);
+        setCatalog((c) =>
+          updateItemFields(c, item.id, { primaryImageUrl: relativePath })
+        );
+        setDirty(true);
+        return;
+      }
+
+      const dataUrl = await fileToResizedDataUrl(file);
+      setCatalog((c) =>
+        updateItemFields(c, item.id, { primaryImageUrl: dataUrl })
+      );
+      setDirty(true);
+    },
+    [bustImageCache]
+  );
+
+  const clearPrimaryImage = useCallback((itemId: string) => {
+    setCatalog((c) =>
+      updateItemFields(c, itemId, { primaryImageUrl: undefined })
+    );
+    setDirty(true);
+  }, []);
+
   const value = useMemo<InventoryContextValue>(
     () => ({
       catalog,
       dirty,
-      fileName: catalog.fileName || "unsaved.csv",
+      fileName: catalog.fileName || "inventory.csv",
+      projectLabel: hasProjectFolder
+        ? catalog.projectName || "project folder"
+        : catalog.projectName || "no folder",
+      hasProjectFolder,
       selectedItemId,
       setSelectedItemId,
+      openFolder,
       importCsv,
       saveCsv,
-      loadMock,
       addItem,
       removeItem,
       patchItem,
@@ -193,14 +405,22 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       addOffer,
       saveOffer,
       removeOffer,
+      createCategory,
+      updateCategoryName,
+      removeCategory,
+      resolveImageSrc,
+      uploadOfferImage,
+      uploadPrimaryImage,
+      clearPrimaryImage,
     }),
     [
       catalog,
       dirty,
+      hasProjectFolder,
       selectedItemId,
+      openFolder,
       importCsv,
       saveCsv,
-      loadMock,
       addItem,
       removeItem,
       patchItem,
@@ -208,6 +428,13 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       addOffer,
       saveOffer,
       removeOffer,
+      createCategory,
+      updateCategoryName,
+      removeCategory,
+      resolveImageSrc,
+      uploadOfferImage,
+      uploadPrimaryImage,
+      clearPrimaryImage,
     ]
   );
 

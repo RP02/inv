@@ -20,6 +20,10 @@ interface FileSystemFileHandle extends FileSystemHandle {
 interface FileSystemDirectoryHandle extends FileSystemHandle {
   readonly kind: "directory";
   getFileHandle(name: string, options?: { create?: boolean }): Promise<FileSystemFileHandle>;
+  getDirectoryHandle(
+    name: string,
+    options?: { create?: boolean }
+  ): Promise<FileSystemDirectoryHandle>;
   values(): AsyncIterableIterator<FileSystemHandle>;
 }
 

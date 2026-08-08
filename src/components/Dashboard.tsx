@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { categoryName } from "../api/inventory";
 import { useInventory } from "../context/InventoryContext";
 import ItemCard from "./ItemCard";
 import ItemDetail from "./ItemDetail";
@@ -7,17 +8,19 @@ import Toolbar from "./Toolbar";
 export default function Dashboard() {
   const { catalog, selectedItemId, setSelectedItemId } = useInventory();
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<string>("All");
+  const [categoryId, setCategoryId] = useState<string>("All");
 
-  const categories = useMemo(() => {
-    const set = new Set(catalog.items.map((i) => i.category || "Uncategorized"));
-    return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [catalog.items]);
+  const categoryOptions = useMemo(() => {
+    return [
+      { id: "All", name: "All" },
+      ...[...catalog.categories].sort((a, b) => a.name.localeCompare(b.name)),
+    ];
+  }, [catalog.categories]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return catalog.items.filter((item) => {
-      if (category !== "All" && item.category !== category) {
+      if (categoryId !== "All" && item.categoryId !== categoryId) {
         return false;
       }
       if (!q) {
@@ -26,7 +29,9 @@ export default function Dashboard() {
       const hay = [
         item.sku,
         item.name,
-        item.category,
+        item.id,
+        item.categoryId,
+        categoryName(catalog, item.categoryId),
         item.notes,
         ...item.offers.map((o) => o.vendor),
       ]
@@ -35,7 +40,7 @@ export default function Dashboard() {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [catalog.items, category, query]);
+  }, [catalog, categoryId, query]);
 
   const selected = catalog.items.find((i) => i.id === selectedItemId) ?? null;
 
@@ -52,21 +57,25 @@ export default function Dashboard() {
           onChange={(e) => setQuery(e.target.value)}
         />
         <div className="pills">
-          {categories.map((c) => (
+          {categoryOptions.map((c) => (
             <button
-              key={c}
+              key={c.id}
               type="button"
-              className={c === category ? "pill active" : "pill"}
-              onClick={() => setCategory(c)}
+              className={c.id === categoryId ? "pill active" : "pill"}
+              onClick={() => setCategoryId(c.id)}
+              title={c.id === "All" ? "All categories" : c.id}
             >
-              {c}
+              {c.name}
             </button>
           ))}
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="empty">No items match. Import a CSV or add an item.</p>
+        <p className="empty">
+          No items yet. Open your OneDrive project folder, or add an item /
+          import a CSV.
+        </p>
       ) : (
         <div className="item-grid">
           {filtered.map((item) => (

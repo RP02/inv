@@ -8,9 +8,9 @@ Lightweight static inventory + vendor cost comparison app (GitHub Pages friendly
 - Item detail with editable vendor comparison table
 - Effective cost = goods + shipping, order qty = `max(preferredQty, moq)`
 - Best-value vendor highlighted (lowest effective $/unit)
-- Import / Save CSV (File System Access API when available; download / file input fallback)
+- Import / Save CSV (File System Access API when available)
+- Optional primary catalog photo + per-vendor photos
 - `localStorage` cache so refresh does not lose edits
-- Built-in sample mock data (in-house ice cream & dessert ingredients)
 
 ## Develop
 
@@ -19,15 +19,22 @@ npm install
 npm run dev
 ```
 
-App runs at http://localhost:3001 (base path `/inv/`).
+App runs at http://localhost:3001/inv/
 
-## CSV shape
+## Project folder (OneDrive)
 
-One row per vendor offer (same SKU repeated):
+Prefer **Open folder** (Chrome/Edge) on a OneDrive directory:
 
-`sku,name,category,imageUrl,notes,unit,preferredQty,vendor,vendorSku,unitPrice,currency,moq,shippingFlat,shippingPerUnit,leadDays,url,lastChecked`
+```text
+inv-data/
+  inventory.csv
+  categories.csv
+  images/{categoryId}/{itemId}/_primary.jpg
+  images/{categoryId}/{itemId}/{vendor}.jpg
+```
 
-Sample file: `sample-data/inventory.sample.csv`
+- **Categories** — add categories with stable ids (`cat_dairy`, …).
+- Details: [`docs/image-storage.md`](docs/image-storage.md).
 
 ## Build / deploy
 

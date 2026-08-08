@@ -1,5 +1,12 @@
-import { formatMoney, getBestOffer } from "../api/inventory";
+import {
+  categoryName,
+  formatMoney,
+  getBestOffer,
+  getItemDisplayImage,
+} from "../api/inventory";
 import { Item } from "../api/inventory/types";
+import { useInventory } from "../context/InventoryContext";
+import ResolvedImage from "./ResolvedImage";
 
 type Props = {
   item: Item;
@@ -7,12 +14,21 @@ type Props = {
 };
 
 export default function ItemCard({ item, onOpen }: Props) {
+  const { catalog } = useInventory();
   const best = getBestOffer(item);
+  const thumb = getItemDisplayImage(item);
 
   return (
     <button type="button" className="item-card" onClick={onOpen}>
+      <div className="item-card-media">
+        {thumb ? (
+          <ResolvedImage imageUrl={thumb} alt="" />
+        ) : (
+          <span className="item-card-media-empty">No photo</span>
+        )}
+      </div>
       <div className="item-card-top">
-        <span className="category">{item.category}</span>
+        <span className="category">{categoryName(catalog, item.categoryId)}</span>
         <span className="sku">{item.sku}</span>
       </div>
       <div className="item-card-name">{item.name}</div>

@@ -3,5 +3,5 @@ build
 dist
 .DS_Store
 *.local
-.env
-.env.*
+.vscode/*
+!.vscode/launch.json
