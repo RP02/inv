@@ -1,6 +1,7 @@
 import { computeItemCosts, formatMoney } from "../api/inventory";
 import { Item, VendorOffer } from "../api/inventory/types";
 import { IconPlus, IconTrash } from "./Icons";
+import { selectOnFocus } from "./selectOnFocus";
 import VendorImageCell from "./VendorImageCell";
 
 type Props = {
@@ -23,6 +24,7 @@ function numInput(
       step={step}
       min={0}
       value={Number.isFinite(value) ? value : 0}
+      onFocus={selectOnFocus}
       onChange={(e) => onChange(Number(e.target.value))}
     />
   );
@@ -92,7 +94,7 @@ export default function VendorComparisonTable({
                       type="text"
                       className="vendor-name-input"
                       value={offer.vendor}
-                      placeholder="Vendor"
+                      onFocus={selectOnFocus}
                       onChange={(e) =>
                         onChangeOffer({ ...offer, vendor: e.target.value })
                       }
@@ -151,7 +153,7 @@ export default function VendorComparisonTable({
                       type="text"
                       className="notes-input"
                       value={offer.notes ?? ""}
-                      placeholder="…"
+                      onFocus={selectOnFocus}
                       onChange={(e) =>
                         onChangeOffer({
                           ...offer,

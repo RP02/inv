@@ -12,11 +12,11 @@ export function createEmptyItem(categoryId = UNCATEGORIZED_ID): Item {
   return {
     id: newId("item"),
     sku: "",
-    name: "New item",
+    name: "",
     categoryId,
     unit: DEFAULT_UNIT,
     preferredQty: DEFAULT_PREFERRED_QTY,
-    offers: [createEmptyOffer()],
+    offers: [],
   };
 }
 

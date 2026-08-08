@@ -9,6 +9,7 @@ import {
   IconX,
 } from "./Icons";
 import PrimaryImagePanel from "./PrimaryImagePanel";
+import { selectOnFocus } from "./selectOnFocus";
 import VendorComparisonTable from "./VendorComparisonTable";
 
 type Props = {
@@ -155,6 +156,7 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
               <input
                 type="text"
                 value={item.sku}
+                onFocus={selectOnFocus}
                 onChange={(e) => patchItem(item.id, { sku: e.target.value })}
               />
             </label>
@@ -163,6 +165,7 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
               <input
                 type="text"
                 value={item.name}
+                onFocus={selectOnFocus}
                 onChange={(e) => patchItem(item.id, { name: e.target.value })}
               />
             </label>
@@ -192,6 +195,7 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
               <input
                 type="text"
                 value={item.unit}
+                onFocus={selectOnFocus}
                 onChange={(e) => patchItem(item.id, { unit: e.target.value })}
               />
             </label>
@@ -202,6 +206,7 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
                 min={1}
                 step={1}
                 value={item.preferredQty}
+                onFocus={selectOnFocus}
                 onChange={(e) =>
                   patchItem(item.id, {
                     preferredQty: Math.max(1, Number(e.target.value) || 1),
@@ -214,6 +219,7 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
               <textarea
                 rows={3}
                 value={item.notes ?? ""}
+                onFocus={selectOnFocus}
                 onChange={(e) =>
                   patchItem(item.id, { notes: e.target.value || undefined })
                 }

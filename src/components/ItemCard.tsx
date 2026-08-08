@@ -31,7 +31,7 @@ export default function ItemCard({ item, onOpen }: Props) {
         <span className="category">{categoryName(catalog, item.categoryId)}</span>
         <span className="sku">{item.sku}</span>
       </div>
-      <div className="item-card-name">{item.name}</div>
+      <div className="item-card-name">{item.name || "Untitled"}</div>
       <div className="item-card-meta">
         {item.offers.length} vendor{item.offers.length === 1 ? "" : "s"}
         {best ? (
