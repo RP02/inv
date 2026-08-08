@@ -1,6 +1,6 @@
 /** Bump when clearing old cached sample catalogs from browsers. */
 export const STORAGE_KEY = "inv.catalog.v3";
-export const DEFAULT_CURRENCY = "USD";
+export const DEFAULT_CURRENCY = "CAD";
 export const DEFAULT_UNIT = "ea";
 export const DEFAULT_PREFERRED_QTY = 1;
 export const UNCATEGORIZED_ID = "cat_uncategorized";
@@ -26,6 +26,7 @@ export const INVENTORY_CSV_HEADERS = [
   "moq",
   "shippingFlat",
   "shippingPerUnit",
+  "vendorNotes",
   "leadDays",
   "url",
   "lastChecked",

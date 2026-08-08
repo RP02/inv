@@ -17,6 +17,8 @@ export type VendorOffer = {
   moq: number;
   shippingFlat: number;
   shippingPerUnit: number;
+  /** Per-vendor notes (comparison table column). */
+  notes?: string;
   leadDays?: number;
   url?: string;
   lastChecked?: string;

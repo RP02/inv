@@ -13,15 +13,12 @@ import {
   Item,
   VendorOffer,
   addCategory,
-  catalogToRows,
-  categoriesToRows,
   createEmptyCatalog,
   createEmptyItem,
   createEmptyOffer,
   deleteCategory,
   deleteItem,
   deleteOffer,
-  downloadCsv,
   fileToResizedDataUrl,
   processImageFile,
   isFileSystemAccessSupported,
@@ -31,7 +28,7 @@ import {
   openCsvFile,
   openProjectFolder,
   parseCatalogFromRows,
-  pickCsvViaInput,
+  openCsvViaInput,
   readProjectFileAsObjectUrl,
   renameCategory,
   saveCatalogToProjectFolder,
@@ -47,6 +44,7 @@ type InventoryContextValue = {
   catalog: Catalog;
   dirty: boolean;
   fileName: string;
+  categoriesFileName: string;
   projectLabel: string;
   hasProjectFolder: boolean;
   selectedItemId: string | null;
@@ -119,21 +117,6 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     setDirty(markDirty);
   }, []);
 
-  const bindProjectFolder = useCallback(
-    (dir: FileSystemDirectoryHandle) => {
-      dirHandleRef.current = dir;
-      fileHandleRef.current = null;
-      setHasProjectFolder(true);
-      setCatalog((c) => ({
-        ...c,
-        projectName: dir.name,
-        fileName: c.fileName || "inventory.csv",
-        categoriesFileName: c.categoriesFileName || "categories.csv",
-      }));
-    },
-    []
-  );
-
   const openFolder = useCallback(async () => {
     const dir = await openProjectFolder();
     if (!dir) {
@@ -147,81 +130,52 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   }, [replaceCatalog]);
 
   const importCsv = useCallback(async () => {
+    if (!dirHandleRef.current) {
+      alert("Open a project folder first, then import a CSV into that project.");
+      return;
+    }
+
+    const projectName = dirHandleRef.current.name;
     if (isFileSystemAccessSupported()) {
       const result = await openCsvFile();
       if (!result) {
         return;
       }
-      fileHandleRef.current = result.handle;
-      dirHandleRef.current = null;
-      setHasProjectFolder(false);
       replaceCatalog(
         {
           ...parseCatalogFromRows(result.rows, catalog.categories),
-          fileName: result.name,
-          projectName: undefined,
+          fileName: catalog.fileName || "inventory.csv",
+          categoriesFileName: catalog.categoriesFileName || "categories.csv",
+          projectName,
         },
-        false
+        true
       );
       return;
     }
 
-    const result = await pickCsvViaInput();
+    const result = await openCsvViaInput();
     if (!result) {
       return;
     }
-    fileHandleRef.current = null;
-    dirHandleRef.current = null;
-    setHasProjectFolder(false);
     replaceCatalog(
       {
         ...parseCatalogFromRows(result.rows, catalog.categories),
-        fileName: result.name,
-        projectName: undefined,
-      },
-      false
-    );
-  }, [catalog.categories, replaceCatalog]);
-
-  const saveCsv = useCallback(async () => {
-    // Preferred path: write inventory.csv + categories.csv into the open project folder.
-    if (dirHandleRef.current) {
-      await saveCatalogToProjectFolder(dirHandleRef.current, catalog);
-      setDirty(false);
-      return;
-    }
-
-    // No folder open — ask before using browser Downloads.
-    const openInstead = window.confirm(
-      "No project folder is open.\n\n" +
-        "Click OK to choose a folder and save inventory.csv + categories.csv there " +
-        "(recommended for images).\n\n" +
-        "Click Cancel to download both CSVs to your browser Downloads folder instead."
-    );
-
-    if (openInstead) {
-      const dir = await openProjectFolder();
-      if (!dir) {
-        return;
-      }
-      bindProjectFolder(dir);
-      await saveCatalogToProjectFolder(dir, {
-        ...catalog,
-        projectName: dir.name,
         fileName: catalog.fileName || "inventory.csv",
         categoriesFileName: catalog.categoriesFileName || "categories.csv",
-      });
-      setDirty(false);
+        projectName,
+      },
+      true
+    );
+  }, [catalog.categories, catalog.categoriesFileName, catalog.fileName, replaceCatalog]);
+
+  const saveCsv = useCallback(async () => {
+    if (!dirHandleRef.current) {
+      alert("Open a project folder first. Nothing is saved until a folder is linked.");
       return;
     }
-
-    downloadCsv(catalogToRows(catalog), catalog.fileName || "inventory.csv");
-    downloadCsv(
-      categoriesToRows(catalog.categories),
-      catalog.categoriesFileName || "categories.csv"
-    );
+    await saveCatalogToProjectFolder(dirHandleRef.current, catalog);
     setDirty(false);
-  }, [bindProjectFolder, catalog]);
+  }, [catalog]);
 
   const addItem = useCallback(() => {
     const defaultCat =
@@ -389,9 +343,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       catalog,
       dirty,
       fileName: catalog.fileName || "inventory.csv",
+      categoriesFileName: catalog.categoriesFileName || "categories.csv",
       projectLabel: hasProjectFolder
         ? catalog.projectName || "project folder"
-        : catalog.projectName || "no folder",
+        : "No project folder",
       hasProjectFolder,
       selectedItemId,
       setSelectedItemId,

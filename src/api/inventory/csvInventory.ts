@@ -194,6 +194,10 @@ export function parseCatalogFromRows(
       moq: Math.max(1, num(cell(row, idx, "moq"), 1)),
       shippingFlat: num(cell(row, idx, "shippingFlat"), 0),
       shippingPerUnit: num(cell(row, idx, "shippingPerUnit"), 0),
+      notes:
+        cell(row, idx, "vendorNotes") ||
+        cell(row, idx, "offerNotes") ||
+        undefined,
       leadDays: cell(row, idx, "leadDays")
         ? num(cell(row, idx, "leadDays"), 0)
         : undefined,
@@ -234,6 +238,7 @@ export function catalogToRows(catalog: Catalog): CsvRows {
         "",
         "",
         "",
+        "",
       ]);
       continue;
     }
@@ -252,10 +257,11 @@ export function catalogToRows(catalog: Catalog): CsvRows {
         offer.vendorSku ?? "",
         offer.imageUrl ?? "",
         offer.unitPrice,
-        offer.currency,
+        offer.currency || DEFAULT_CURRENCY,
         offer.moq,
         offer.shippingFlat,
         offer.shippingPerUnit,
+        offer.notes ?? "",
         offer.leadDays ?? "",
         offer.url ?? "",
         offer.lastChecked ?? "",

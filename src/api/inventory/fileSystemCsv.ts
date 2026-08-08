@@ -160,20 +160,21 @@ export async function saveCsvAs(
   }
 }
 
-export function downloadCsv(rows: CsvRows, fileName: string): void {
+/** Fallback download when File System Access API is unavailable. */
+export function downloadCsv(rows: CsvRows, filename: string): void {
   const blob = new Blob([rowsToCsvString(rows)], {
     type: "text/csv;charset=utf-8",
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = fileName;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-/** Fallback when File System Access API is unavailable. */
-export function pickCsvViaInput(): Promise<{ rows: string[][]; name: string } | null> {
+/** Fallback open via hidden file input. */
+export function openCsvViaInput(): Promise<{ rows: string[][]; name: string } | null> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";

@@ -5,8 +5,8 @@ import {
 } from "../api/inventory/imageUtils";
 import { Item } from "../api/inventory/types";
 import { useInventory } from "../context/InventoryContext";
+import ImageActionMenu from "./ImageActionMenu";
 import ImageLightbox from "./ImageLightbox";
-import ImagePicker from "./ImagePicker";
 import ResolvedImage from "./ResolvedImage";
 
 type Props = {
@@ -30,6 +30,7 @@ export default function PrimaryImagePanel({ item }: Props) {
   });
   const shown = hasPrimary ? item.primaryImageUrl : fallback;
   const usingFallback = !hasPrimary && !!fallback;
+  const showingSomething = isUsableImageRef(shown);
 
   const onFile = async (file: File) => {
     setBusy(true);
@@ -46,50 +47,38 @@ export default function PrimaryImagePanel({ item }: Props) {
   return (
     <div className="primary-image-panel">
       <div className="primary-image-label">Primary catalog photo</div>
-      <button
-        type="button"
-        className="primary-image-frame"
-        onClick={() => {
-          if (!shown) {
-            return;
-          }
-          void resolveImageSrc(shown).then((src) => {
-            if (src) {
-              setPreview(src);
-            }
-          });
-        }}
-      >
-        {shown ? (
+      <ImageActionMenu
+        large
+        hasImage={showingSomething}
+        busy={busy}
+        emptyLabel="Click to add photo"
+        preview={
           <ResolvedImage imageUrl={shown} alt={`${item.name} primary`} />
-        ) : (
-          <span className="primary-image-empty">
-            Use Gallery or Camera below
-          </span>
-        )}
-      </button>
+        }
+        onFile={onFile}
+        onClear={
+          hasPrimary ? () => clearPrimaryImage(item.id) : undefined
+        }
+        onPreview={
+          showingSomething
+            ? () => {
+                void resolveImageSrc(shown).then((src) => {
+                  if (src) {
+                    setPreview(src);
+                  }
+                });
+              }
+            : undefined
+        }
+      />
       <p className="field-hint">
         {hasPrimary
-          ? "Custom primary (JPEG/PNG/WebP). Separate from vendor photos."
+          ? "Custom primary. Click photo for gallery / camera / remove."
           : usingFallback
-            ? "Showing first vendor photo. Upload a different primary anytime."
-            : "JPEG, PNG, WebP, GIF. On phone: Camera takes a photo instantly."}
+            ? "Showing first vendor photo. Click to set a custom primary."
+            : "Click the placeholder for gallery or camera."}
       </p>
-      <ImagePicker busy={busy} hasImage={hasPrimary} onFile={onFile} />
-      {hasPrimary ? (
-        <button
-          type="button"
-          className="secondary"
-          onClick={() => clearPrimaryImage(item.id)}
-        >
-          Clear (use first vendor photo)
-        </button>
-      ) : null}
-      {!hasProjectFolder ? (
-        <span className="thumb-note">
-          Tip: Open folder on desktop so photos save under images/…
-        </span>
-      ) : hasPrimary ? (
+      {hasPrimary && hasProjectFolder ? (
         <span className="thumb-note" title={item.primaryImageUrl}>
           {item.primaryImageUrl}
         </span>

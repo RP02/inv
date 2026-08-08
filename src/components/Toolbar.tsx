@@ -10,9 +10,9 @@ export default function Toolbar() {
     openFolder,
     dirty,
     fileName,
+    categoriesFileName,
     catalog,
     projectLabel,
-    hasProjectFolder,
   } = useInventory();
   const [showCategories, setShowCategories] = useState(false);
   const [showMore, setShowMore] = useState(false);
@@ -22,14 +22,33 @@ export default function Toolbar() {
       <header className="toolbar">
         <div className="toolbar-left">
           <h1>inv</h1>
-          <span className="meta">
-            {hasProjectFolder ? `${projectLabel}/` : ""}
-            {fileName}
-            {dirty ? " · unsaved" : " · saved"}
-            {" · "}
-            {catalog.items.length} items
-            {!hasProjectFolder ? " · open folder on desktop for disk photos" : ""}
-          </span>
+          <div
+            className="project-path linked"
+            title={`Saving to folder "${projectLabel}"`}
+          >
+            <div className="project-path-row">
+              <span className="project-path-label">Project</span>
+              <code className="project-path-value">{projectLabel}/</code>
+            </div>
+            <div className="project-path-row">
+              <span className="project-path-label">Files</span>
+              <code className="project-path-value">
+                {projectLabel}/{fileName}
+                {" · "}
+                {projectLabel}/{categoriesFileName}
+              </code>
+            </div>
+            <div className="project-path-meta">
+              {dirty ? "Unsaved changes" : "Saved"}
+              {" · "}
+              {catalog.items.length} item
+              {catalog.items.length === 1 ? "" : "s"}
+              {" · "}
+              {catalog.categories.length} categor
+              {catalog.categories.length === 1 ? "y" : "ies"}
+              {" · images/… on disk"}
+            </div>
+          </div>
         </div>
         <div className="toolbar-actions">
           <button type="button" className="btn-primary" onClick={addItem}>
@@ -51,7 +70,7 @@ export default function Toolbar() {
           </button>
           <div className={showMore ? "toolbar-more open" : "toolbar-more"}>
             <button type="button" onClick={() => void openFolder()}>
-              Open folder
+              Switch folder
             </button>
             <button type="button" onClick={() => void importCsv()}>
               Import CSV

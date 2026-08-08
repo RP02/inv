@@ -46,7 +46,7 @@ export function getBestOffer(item: Item): VendorOffer | undefined {
   return item.offers.find((o) => o.id === best.offerId);
 }
 
-export function formatMoney(n: number, currency = "USD"): string {
+export function formatMoney(n: number, currency = "CAD"): string {
   try {
     return new Intl.NumberFormat(undefined, {
       style: "currency",

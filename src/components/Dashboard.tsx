@@ -3,10 +3,12 @@ import { categoryName } from "../api/inventory";
 import { useInventory } from "../context/InventoryContext";
 import ItemCard from "./ItemCard";
 import ItemDetail from "./ItemDetail";
+import ProjectGate from "./ProjectGate";
 import Toolbar from "./Toolbar";
 
 export default function Dashboard() {
-  const { catalog, selectedItemId, setSelectedItemId } = useInventory();
+  const { catalog, selectedItemId, setSelectedItemId, hasProjectFolder } =
+    useInventory();
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<string>("All");
 
@@ -44,6 +46,10 @@ export default function Dashboard() {
 
   const selected = catalog.items.find((i) => i.id === selectedItemId) ?? null;
 
+  if (!hasProjectFolder) {
+    return <ProjectGate />;
+  }
+
   return (
     <div className="app-shell">
       <Toolbar />
@@ -73,8 +79,7 @@ export default function Dashboard() {
 
       {filtered.length === 0 ? (
         <p className="empty">
-          No items yet. Open your OneDrive project folder, or add an item /
-          import a CSV.
+          No items yet. Use Add Item, or Import CSV into this project folder.
         </p>
       ) : (
         <div className="item-grid">
@@ -89,7 +94,11 @@ export default function Dashboard() {
       )}
 
       {selected ? (
-        <ItemDetail item={selected} onClose={() => setSelectedItemId(null)} />
+        <ItemDetail
+          item={selected}
+          onClose={() => setSelectedItemId(null)}
+          onNavigate={setSelectedItemId}
+        />
       ) : null}
     </div>
   );

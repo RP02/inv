@@ -2,8 +2,8 @@ import { useState } from "react";
 import { isUsableImageRef } from "../api/inventory/imageUtils";
 import { Item, VendorOffer } from "../api/inventory/types";
 import { useInventory } from "../context/InventoryContext";
+import ImageActionMenu from "./ImageActionMenu";
 import ImageLightbox from "./ImageLightbox";
-import ImagePicker from "./ImagePicker";
 import ResolvedImage from "./ResolvedImage";
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default function VendorImageCell({ item, offer, onChange }: Props) {
-  const { uploadOfferImage, hasProjectFolder, resolveImageSrc } = useInventory();
+  const { uploadOfferImage, resolveImageSrc } = useInventory();
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const hasImage = isUsableImageRef(offer.imageUrl);
@@ -39,43 +39,20 @@ export default function VendorImageCell({ item, offer, onChange }: Props) {
 
   return (
     <div className="vendor-image-cell">
-      {hasImage ? (
-        <button
-          type="button"
-          className="thumb-btn"
-          title={offer.imageUrl}
-          onClick={() => void openPreview()}
-        >
+      <ImageActionMenu
+        hasImage={hasImage}
+        busy={busy}
+        emptyLabel="+"
+        preview={
           <ResolvedImage
             imageUrl={offer.imageUrl}
             alt={`${offer.vendor} product`}
           />
-        </button>
-      ) : (
-        <div className="thumb-empty">—</div>
-      )}
-      <ImagePicker
-        compact
-        busy={busy}
-        hasImage={hasImage}
+        }
         onFile={onFile}
+        onClear={() => onChange({ ...offer, imageUrl: undefined })}
+        onPreview={() => void openPreview()}
       />
-      {hasImage ? (
-        <button
-          type="button"
-          className="secondary thumb-clear"
-          onClick={() => onChange({ ...offer, imageUrl: undefined })}
-        >
-          Clear
-        </button>
-      ) : null}
-      {!hasProjectFolder ? (
-        <span className="thumb-note">no folder</span>
-      ) : (
-        <span className="thumb-note" title={offer.imageUrl}>
-          {offer.imageUrl?.startsWith("images/") ? "on disk" : ""}
-        </span>
-      )}
       {preview ? (
         <ImageLightbox
           src={preview}

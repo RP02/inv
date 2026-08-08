@@ -1,5 +1,6 @@
 import { computeItemCosts, formatMoney } from "../api/inventory";
 import { Item, VendorOffer } from "../api/inventory/types";
+import { IconPlus, IconTrash } from "./Icons";
 import VendorImageCell from "./VendorImageCell";
 
 type Props = {
@@ -12,11 +13,13 @@ type Props = {
 function numInput(
   value: number,
   onChange: (n: number) => void,
-  step = "0.01"
+  step = "0.01",
+  className?: string
 ) {
   return (
     <input
       type="number"
+      className={className}
       step={step}
       min={0}
       value={Number.isFinite(value) ? value : 0}
@@ -37,37 +40,37 @@ export default function VendorComparisonTable({
   return (
     <div className="vendor-table-wrap">
       <div className="vendor-table-head">
-        <h3>Vendor comparison</h3>
-        <button type="button" onClick={onAddOffer}>
-          Add vendor
+        <h3>Vendors · CAD</h3>
+        <button
+          type="button"
+          className="icon-btn accent"
+          title="Add vendor"
+          aria-label="Add vendor"
+          onClick={onAddOffer}
+        >
+          <IconPlus size={18} />
         </button>
       </div>
-      <p className="hint">
-        Photos save under{" "}
-        <code>
-          images/{item.categoryId}/{item.id}/
-        </code>{" "}
-        when a project folder is open.
-      </p>
-      <table className="vendor-table">
+      <table className="vendor-table dense">
         <thead>
           <tr>
-            <th>Photo</th>
-            <th>Vendor</th>
-            <th>Unit price</th>
-            <th>MOQ</th>
-            <th>Ship flat</th>
-            <th>Ship / unit</th>
-            <th>Order qty</th>
-            <th>Total</th>
-            <th>$ / unit</th>
-            <th></th>
+            <th title="Photo" aria-label="Photo" />
+            <th title="Vendor">Vendor</th>
+            <th title="Unit price">Price</th>
+            <th title="Minimum order quantity">MOQ</th>
+            <th title="Shipping flat fee">Ship$</th>
+            <th title="Shipping per unit">Ship/u</th>
+            <th title="Order quantity">Qty</th>
+            <th title="Effective total">Total</th>
+            <th title="Effective per unit">$/u</th>
+            <th title="Notes">Notes</th>
+            <th aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
           {item.offers.length === 0 ? (
             <tr>
-              <td colSpan={10}>No vendor offers yet.</td>
+              <td colSpan={11}>No vendors yet — use + to add one.</td>
             </tr>
           ) : (
             item.offers.map((offer) => {
@@ -87,6 +90,7 @@ export default function VendorComparisonTable({
                   <td>
                     <input
                       type="text"
+                      className="vendor-name-input"
                       value={offer.vendor}
                       placeholder="Vendor"
                       onChange={(e) =>
@@ -94,49 +98,77 @@ export default function VendorComparisonTable({
                       }
                     />
                     {cost?.isBestValue ? (
-                      <span className="badge">Best value</span>
+                      <span className="badge">Best</span>
                     ) : null}
                   </td>
                   <td>
-                    {numInput(offer.unitPrice, (unitPrice) =>
-                      onChangeOffer({ ...offer, unitPrice })
+                    {numInput(
+                      offer.unitPrice,
+                      (unitPrice) => onChangeOffer({ ...offer, unitPrice }),
+                      "0.01",
+                      "num-narrow"
                     )}
                   </td>
                   <td>
                     {numInput(
                       offer.moq,
                       (moq) => onChangeOffer({ ...offer, moq }),
-                      "1"
+                      "1",
+                      "num-narrow"
                     )}
                   </td>
                   <td>
-                    {numInput(offer.shippingFlat, (shippingFlat) =>
-                      onChangeOffer({ ...offer, shippingFlat })
+                    {numInput(
+                      offer.shippingFlat,
+                      (shippingFlat) =>
+                        onChangeOffer({ ...offer, shippingFlat }),
+                      "0.01",
+                      "num-narrow"
                     )}
                   </td>
                   <td>
-                    {numInput(offer.shippingPerUnit, (shippingPerUnit) =>
-                      onChangeOffer({ ...offer, shippingPerUnit })
+                    {numInput(
+                      offer.shippingPerUnit,
+                      (shippingPerUnit) =>
+                        onChangeOffer({ ...offer, shippingPerUnit }),
+                      "0.01",
+                      "num-narrow"
                     )}
                   </td>
-                  <td>{cost?.orderQty ?? "—"}</td>
-                  <td>
+                  <td className="num-readonly">{cost?.orderQty ?? "—"}</td>
+                  <td className="num-readonly">
                     {cost
                       ? formatMoney(cost.effectiveTotal, offer.currency)
                       : "—"}
                   </td>
-                  <td>
+                  <td className="num-readonly">
                     {cost
                       ? formatMoney(cost.effectivePerUnit, offer.currency)
                       : "—"}
                   </td>
                   <td>
+                    <input
+                      type="text"
+                      className="notes-input"
+                      value={offer.notes ?? ""}
+                      placeholder="…"
+                      onChange={(e) =>
+                        onChangeOffer({
+                          ...offer,
+                          notes: e.target.value || undefined,
+                        })
+                      }
+                    />
+                  </td>
+                  <td>
                     <button
                       type="button"
-                      className="danger"
+                      className="icon-btn danger"
+                      title="Remove vendor"
+                      aria-label="Remove vendor"
                       onClick={() => onRemoveOffer(offer.id)}
                     >
-                      Remove
+                      <IconTrash size={16} />
                     </button>
                   </td>
                 </tr>
