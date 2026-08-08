@@ -139,3 +139,14 @@ export function IconTags(p: IconProps) {
     </Svg>
   );
 }
+
+export function IconItemDetails(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="7" y1="8" x2="17" y2="8" />
+      <line x1="7" y1="12" x2="17" y2="12" />
+      <line x1="7" y1="16" x2="13" y2="16" />
+    </Svg>
+  );
+}

@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { categoryName } from "../api/inventory";
 import { Item } from "../api/inventory/types";
 import { useInventory } from "../context/InventoryContext";
 import {
   IconChevronLeft,
   IconChevronRight,
+  IconItemDetails,
   IconTrash,
   IconX,
 } from "./Icons";
@@ -52,6 +53,8 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
       ? siblings[index + 1]
       : undefined;
   const catLabel = categoryName(catalog, item.categoryId);
+  /** Mobile: hide product fields by default so vendors get the screen. */
+  const [showItemDetails, setShowItemDetails] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -121,6 +124,24 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
             </div>
             <button
               type="button"
+              className={
+                showItemDetails
+                  ? "icon-btn detail-mobile-toggle active"
+                  : "icon-btn detail-mobile-toggle"
+              }
+              title={
+                showItemDetails ? "Hide item details" : "Show item details"
+              }
+              aria-label={
+                showItemDetails ? "Hide item details" : "Show item details"
+              }
+              aria-pressed={showItemDetails}
+              onClick={() => setShowItemDetails((v) => !v)}
+            >
+              <IconItemDetails />
+            </button>
+            <button
+              type="button"
               className="icon-btn danger"
               title="Delete item"
               aria-label="Delete item"
@@ -145,7 +166,13 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
           </div>
         </div>
 
-        <div className="detail-body">
+        <div
+          className={
+            showItemDetails
+              ? "detail-body"
+              : "detail-body vendors-focus"
+          }
+        >
           <section className="product-panel">
             <label>
               Item id

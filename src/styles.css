@@ -887,9 +887,37 @@ button.pill.active {
   font-weight: 600;
 }
 
+.detail-mobile-toggle {
+  display: none;
+}
+
 @media (max-width: 800px) {
   .detail-body {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+  }
+
+  .detail-body .comparison-panel {
+    order: 1;
+  }
+
+  .detail-body .product-panel {
+    order: 2;
+  }
+
+  .detail-body.vendors-focus .product-panel {
+    display: none;
+  }
+
+  .detail-mobile-toggle {
+    display: inline-flex;
+  }
+
+  .detail-mobile-toggle.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: #eef4ff;
   }
 
   .detail-overlay {
