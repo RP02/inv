@@ -92,3 +92,50 @@ export function IconPlus(p: IconProps) {
     </Svg>
   );
 }
+
+export function IconInfo(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </Svg>
+  );
+}
+
+export function IconSave(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+      <polyline points="17 21 17 13 7 13 7 21" />
+      <polyline points="7 3 7 8 15 8" />
+    </Svg>
+  );
+}
+
+export function IconMore(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="6" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
+export function IconFolder(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </Svg>
+  );
+}
+
+export function IconTags(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+      <line x1="7" y1="7" x2="7.01" y2="7" />
+    </Svg>
+  );
+}

@@ -68,10 +68,22 @@ button.btn-save-dirty {
   border-color: #c2410c;
   color: #fff;
   font-weight: 700;
+  position: relative;
 }
 
 button.btn-save-dirty:hover {
   filter: brightness(1.05);
+}
+
+.save-dirty-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px #c2410c;
 }
 
 .save-toast {
@@ -113,8 +125,8 @@ button.pill.active {
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
 }
@@ -122,32 +134,67 @@ button.pill.active {
 .toolbar h1 {
   margin: 0;
   font-size: 1.4rem;
+  line-height: 1;
 }
 
 .toolbar-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
   min-width: 0;
-  flex: 1 1 16rem;
+  flex: 1 1 auto;
 }
 
-.project-path {
-  border: 1px solid var(--border);
+.toolbar-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.55rem;
+}
+
+.csv-status {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.csv-status.saved {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.csv-status.unsaved {
+  color: #9a3412;
+  background: #fff7ed;
+  border-color: #fdba74;
+}
+
+.project-info {
+  position: relative;
+}
+
+.project-info-btn {
+  color: var(--muted);
+}
+
+.project-info-btn[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.project-info-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0.65rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid #8fd19e;
   border-radius: 6px;
-  padding: 0.45rem 0.65rem;
-  background: #fafafa;
-  max-width: 100%;
-}
-
-.project-path.linked {
-  border-color: #8fd19e;
-  background: #f3fbf5;
-}
-
-.project-path.unbound {
-  border-color: #e0c36a;
-  background: #fffbeb;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  background-image: linear-gradient(#f3fbf5, #fff);
 }
 
 .project-path-row {
@@ -156,6 +203,7 @@ button.pill.active {
   gap: 0.35rem 0.6rem;
   align-items: baseline;
   font-size: 0.85rem;
+  margin-bottom: 0.35rem;
 }
 
 .project-path-label {
@@ -171,25 +219,61 @@ button.pill.active {
   color: var(--text);
 }
 
-.project-path-meta {
-  margin-top: 0.25rem;
+.project-info-note,
+.project-info-counts {
+  margin: 0.45rem 0 0;
   font-size: 0.78rem;
   color: var(--muted);
+  line-height: 1.35;
+}
+
+.project-info-counts {
+  margin-top: 0.25rem;
 }
 
 .toolbar-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
   align-items: center;
+  flex-shrink: 0;
 }
 
-.toolbar-more-toggle {
-  display: none;
+.toolbar-overflow {
+  position: relative;
 }
 
-.toolbar-more {
-  display: contents;
+.toolbar-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  min-width: 11.5rem;
+  padding: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.toolbar-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 36px;
+  padding: 0.35rem 0.55rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  border-radius: 4px;
+}
+
+.toolbar-menu button:hover {
+  background: #f0f0f0;
 }
 
 .meta {
@@ -831,25 +915,6 @@ button.pill.active {
 
   .search {
     max-width: none;
-  }
-
-  .toolbar-more-toggle {
-    display: inline-flex;
-  }
-
-  .toolbar-more {
-    display: none;
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  .toolbar-more.open {
-    display: flex;
-  }
-
-  .toolbar-actions {
-    width: 100%;
   }
 
   .vendor-table {

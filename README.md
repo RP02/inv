@@ -39,6 +39,9 @@ inv-data/
 ## Build / deploy
 
 ```bash
-npm run build
 npm run deploy
 ```
+
+`predeploy` bumps the patch version in `package.json` (`0.1.0` → `0.1.1`, …), then builds. The footer shows that version. Commit the updated `package.json` / `package-lock.json` after deploy so git stays in sync.
+
+For a manual bump without deploying: `npm version patch|minor|major --no-git-tag-version`.
