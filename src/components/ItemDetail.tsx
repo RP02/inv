@@ -227,21 +227,6 @@ export default function ItemDetail({ item, onClose, onNavigate }: Props) {
               />
             </label>
             <label>
-              Preferred qty
-              <input
-                type="number"
-                min={1}
-                step={1}
-                value={item.preferredQty}
-                onFocus={selectOnFocus}
-                onChange={(e) =>
-                  patchItem(item.id, {
-                    preferredQty: Math.max(1, Number(e.target.value) || 1),
-                  })
-                }
-              />
-            </label>
-            <label>
               Notes
               <textarea
                 rows={3}

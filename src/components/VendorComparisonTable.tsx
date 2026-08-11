@@ -58,13 +58,9 @@ export default function VendorComparisonTable({
           <tr>
             <th title="Photo" aria-label="Photo" />
             <th title="Vendor">Vendor</th>
-            <th title="Unit price">Price</th>
-            <th title="Minimum order quantity">MOQ</th>
-            <th title="Shipping flat fee">Ship$</th>
-            <th title="Shipping per unit">Ship/u</th>
-            <th title="Order quantity">Qty</th>
-            <th title="Effective total">Total</th>
-            <th title="Effective per unit">$/u</th>
+            <th title="Total price">Total Price</th>
+            <th title="Number of units">#units</th>
+            <th title="Unit price (total ÷ units)">unit price</th>
             <th title="Notes">Notes</th>
             <th aria-label="Actions" />
           </tr>
@@ -72,7 +68,7 @@ export default function VendorComparisonTable({
         <tbody>
           {item.offers.length === 0 ? (
             <tr>
-              <td colSpan={11}>No vendors yet — use + to add one.</td>
+              <td colSpan={7}>No vendors yet — use + to add one.</td>
             </tr>
           ) : (
             item.offers.map((offer) => {
@@ -105,47 +101,27 @@ export default function VendorComparisonTable({
                   </td>
                   <td>
                     {numInput(
-                      offer.unitPrice,
-                      (unitPrice) => onChangeOffer({ ...offer, unitPrice }),
+                      offer.totalPrice,
+                      (totalPrice) => onChangeOffer({ ...offer, totalPrice }),
                       "0.01",
                       "num-narrow"
                     )}
                   </td>
                   <td>
                     {numInput(
-                      offer.moq,
-                      (moq) => onChangeOffer({ ...offer, moq }),
+                      offer.units,
+                      (units) =>
+                        onChangeOffer({
+                          ...offer,
+                          units: Math.max(0, units),
+                        }),
                       "1",
                       "num-narrow"
                     )}
                   </td>
-                  <td>
-                    {numInput(
-                      offer.shippingFlat,
-                      (shippingFlat) =>
-                        onChangeOffer({ ...offer, shippingFlat }),
-                      "0.01",
-                      "num-narrow"
-                    )}
-                  </td>
-                  <td>
-                    {numInput(
-                      offer.shippingPerUnit,
-                      (shippingPerUnit) =>
-                        onChangeOffer({ ...offer, shippingPerUnit }),
-                      "0.01",
-                      "num-narrow"
-                    )}
-                  </td>
-                  <td className="num-readonly">{cost?.orderQty ?? "—"}</td>
                   <td className="num-readonly">
                     {cost
-                      ? formatMoney(cost.effectiveTotal, offer.currency)
-                      : "—"}
-                  </td>
-                  <td className="num-readonly">
-                    {cost
-                      ? formatMoney(cost.effectivePerUnit, offer.currency)
+                      ? formatMoney(cost.unitPrice, offer.currency)
                       : "—"}
                   </td>
                   <td>

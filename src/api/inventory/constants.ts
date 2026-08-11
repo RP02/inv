@@ -1,8 +1,8 @@
 /** Bump when clearing old cached sample catalogs from browsers. */
-export const STORAGE_KEY = "inv.catalog.v3";
+export const STORAGE_KEY = "inv.catalog.v4";
 export const DEFAULT_CURRENCY = "CAD";
 export const DEFAULT_UNIT = "ea";
-export const DEFAULT_PREFERRED_QTY = 1;
+export const DEFAULT_UNITS = 1;
 export const UNCATEGORIZED_ID = "cat_uncategorized";
 export const UNCATEGORIZED_NAME = "Uncategorized";
 export const IMAGES_DIR = "images";
@@ -17,15 +17,12 @@ export const INVENTORY_CSV_HEADERS = [
   "primaryImageUrl",
   "notes",
   "unit",
-  "preferredQty",
   "vendor",
   "vendorSku",
   "imageUrl",
-  "unitPrice",
+  "totalPrice",
+  "units",
   "currency",
-  "moq",
-  "shippingFlat",
-  "shippingPerUnit",
   "vendorNotes",
   "leadDays",
   "url",

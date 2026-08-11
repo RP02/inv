@@ -12,11 +12,11 @@ export type VendorOffer = {
    * or https URL / data URL fallback when no folder is open.
    */
   imageUrl?: string;
-  unitPrice: number;
+  /** Total price for the quoted quantity (CAD unless currency set). */
+  totalPrice: number;
+  /** Number of units in the quote. */
+  units: number;
   currency: string;
-  moq: number;
-  shippingFlat: number;
-  shippingPerUnit: number;
   /** Per-vendor notes (comparison table column). */
   notes?: string;
   leadDays?: number;
@@ -33,7 +33,6 @@ export type Item = {
   primaryImageUrl?: string;
   notes?: string;
   unit: string;
-  preferredQty: number;
   offers: VendorOffer[];
 };
 
@@ -47,10 +46,8 @@ export type Catalog = {
 
 export type OfferCost = {
   offerId: string;
-  orderQty: number;
-  goodsTotal: number;
-  shippingTotal: number;
-  effectiveTotal: number;
-  effectivePerUnit: number;
+  units: number;
+  totalPrice: number;
+  unitPrice: number;
   isBestValue: boolean;
 };

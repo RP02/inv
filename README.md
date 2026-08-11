@@ -6,8 +6,8 @@ Lightweight static inventory + vendor cost comparison app (GitHub Pages friendly
 
 - Catalog dashboard with search and category filters
 - Item detail with editable vendor comparison table
-- Effective cost = goods + shipping, order qty = `max(preferredQty, moq)`
-- Best-value vendor highlighted (lowest effective $/unit)
+- Vendor quotes: Total Price + #units → unit price (`total ÷ units`)
+- Best-value vendor highlighted (lowest unit price)
 - Import / Save CSV (File System Access API when available)
 - Optional primary catalog photo + per-vendor photos
 - `localStorage` cache so refresh does not lose edits

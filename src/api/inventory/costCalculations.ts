@@ -1,39 +1,37 @@
 import { Item, OfferCost, VendorOffer } from "./types";
 
-/** orderQty = max(preferredQty, moq); shipping = flat + perUnit * orderQty */
-export function computeOfferCost(
-  offer: VendorOffer,
-  preferredQty: number
-): Omit<OfferCost, "isBestValue"> {
-  const qty = Math.max(1, preferredQty || 1);
-  const moq = Math.max(1, offer.moq || 1);
-  const orderQty = Math.max(qty, moq);
-  const goodsTotal = orderQty * (offer.unitPrice || 0);
-  const shippingTotal =
-    (offer.shippingFlat || 0) + orderQty * (offer.shippingPerUnit || 0);
-  const effectiveTotal = goodsTotal + shippingTotal;
-  const effectivePerUnit = orderQty > 0 ? effectiveTotal / orderQty : 0;
+/** unitPrice = totalPrice / units */
+export function unitPriceOf(offer: VendorOffer): number {
+  const units = Math.max(0, offer.units || 0);
+  if (units <= 0) {
+    return 0;
+  }
+  return (offer.totalPrice || 0) / units;
+}
 
+export function computeOfferCost(
+  offer: VendorOffer
+): Omit<OfferCost, "isBestValue"> {
+  const units = Math.max(0, offer.units || 0);
+  const totalPrice = offer.totalPrice || 0;
   return {
     offerId: offer.id,
-    orderQty,
-    goodsTotal,
-    shippingTotal,
-    effectiveTotal,
-    effectivePerUnit,
+    units,
+    totalPrice,
+    unitPrice: units > 0 ? totalPrice / units : 0,
   };
 }
 
 export function computeItemCosts(item: Item): OfferCost[] {
-  const base = item.offers.map((o) => computeOfferCost(o, item.preferredQty));
+  const base = item.offers.map((o) => computeOfferCost(o));
   if (base.length === 0) {
     return [];
   }
 
-  const best = Math.min(...base.map((c) => c.effectivePerUnit));
+  const best = Math.min(...base.map((c) => c.unitPrice));
   return base.map((c) => ({
     ...c,
-    isBestValue: c.effectivePerUnit === best,
+    isBestValue: c.unitPrice === best,
   }));
 }
 

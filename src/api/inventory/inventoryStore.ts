@@ -1,10 +1,12 @@
 import { STORAGE_KEY } from "./constants";
-import { ensureUncategorized } from "./csvInventory";
+import { ensureUncategorized, normalizeItem } from "./csvInventory";
 import { Catalog } from "./types";
 
 export function loadCatalogFromStorage(): Catalog | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw =
+      localStorage.getItem(STORAGE_KEY) ||
+      localStorage.getItem("inv.catalog.v3");
     if (!raw) {
       return null;
     }
@@ -15,14 +17,16 @@ export function loadCatalogFromStorage(): Catalog | null {
     return {
       ...parsed,
       categories: ensureUncategorized(parsed.categories ?? []),
-      items: parsed.items.map((item) => ({
-        ...item,
-        // migrate old catalogs that used category: string
-        categoryId:
-          item.categoryId ||
-          (item as { category?: string }).category ||
-          "cat_uncategorized",
-      })),
+      items: parsed.items.map((item) =>
+        normalizeItem({
+          ...item,
+          // migrate old catalogs that used category: string
+          categoryId:
+            item.categoryId ||
+            (item as { category?: string }).category ||
+            "cat_uncategorized",
+        })
+      ),
     };
   } catch {
     return null;
@@ -39,4 +43,5 @@ export function saveCatalogToStorage(catalog: Catalog): void {
 
 export function clearCatalogStorage(): void {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem("inv.catalog.v3");
 }

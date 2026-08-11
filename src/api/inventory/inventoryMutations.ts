@@ -1,7 +1,7 @@
 import {
   DEFAULT_CURRENCY,
-  DEFAULT_PREFERRED_QTY,
   DEFAULT_UNIT,
+  DEFAULT_UNITS,
   UNCATEGORIZED_ID,
 } from "./constants";
 import { newId } from "./csvInventory";
@@ -15,7 +15,6 @@ export function createEmptyItem(categoryId = UNCATEGORIZED_ID): Item {
     name: "",
     categoryId,
     unit: DEFAULT_UNIT,
-    preferredQty: DEFAULT_PREFERRED_QTY,
     offers: [],
   };
 }
@@ -24,11 +23,9 @@ export function createEmptyOffer(): VendorOffer {
   return {
     id: newId("offer"),
     vendor: "",
-    unitPrice: 0,
+    totalPrice: 0,
+    units: DEFAULT_UNITS,
     currency: DEFAULT_CURRENCY,
-    moq: 1,
-    shippingFlat: 0,
-    shippingPerUnit: 0,
   };
 }
 

@@ -3,6 +3,7 @@ import {
   formatMoney,
   getBestOffer,
   getItemDisplayImage,
+  unitPriceOf,
 } from "../api/inventory";
 import { Item } from "../api/inventory/types";
 import { useInventory } from "../context/InventoryContext";
@@ -38,7 +39,7 @@ export default function ItemCard({ item, onOpen }: Props) {
           <>
             {" · best: "}
             <strong>{best.vendor}</strong>{" "}
-            {formatMoney(best.unitPrice, best.currency)}/{item.unit}
+            {formatMoney(unitPriceOf(best), best.currency)}/{item.unit}
           </>
         ) : (
           " · no offers"

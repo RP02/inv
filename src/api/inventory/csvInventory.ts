@@ -1,8 +1,8 @@
 ﻿import {
   CATEGORY_CSV_HEADERS,
   DEFAULT_CURRENCY,
-  DEFAULT_PREFERRED_QTY,
   DEFAULT_UNIT,
+  DEFAULT_UNITS,
   INVENTORY_CSV_HEADERS,
   UNCATEGORIZED_ID,
   UNCATEGORIZED_NAME,
@@ -41,6 +41,74 @@ function cell(row: string[], idx: Record<string, number>, key: string): string {
     return "";
   }
   return str(row[i]);
+}
+
+/** Migrate legacy offer fields (unitPrice/moq/shipping) into totalPrice + units. */
+export function normalizeOffer(
+  raw: Partial<VendorOffer> & {
+    unitPrice?: number;
+    moq?: number;
+    shippingFlat?: number;
+    shippingPerUnit?: number;
+  },
+  preferredQty = DEFAULT_UNITS
+): VendorOffer {
+  const hasNew =
+    typeof raw.totalPrice === "number" || typeof raw.units === "number";
+
+  let units: number;
+  let totalPrice: number;
+
+  if (hasNew) {
+    units = Math.max(1, raw.units || DEFAULT_UNITS);
+    totalPrice = raw.totalPrice ?? 0;
+  } else {
+    const moq = Math.max(1, raw.moq || 1);
+    units = Math.max(1, preferredQty || 1, moq);
+    const shipping =
+      (raw.shippingFlat || 0) + units * (raw.shippingPerUnit || 0);
+    totalPrice = units * (raw.unitPrice || 0) + shipping;
+  }
+
+  return {
+    id: raw.id || newId("offer"),
+    vendor: raw.vendor ?? "",
+    vendorSku: raw.vendorSku,
+    imageUrl: raw.imageUrl,
+    totalPrice,
+    units,
+    currency: raw.currency || DEFAULT_CURRENCY,
+    notes: raw.notes,
+    leadDays: raw.leadDays,
+    url: raw.url,
+    lastChecked: raw.lastChecked,
+  };
+}
+
+export function normalizeItem(
+  raw: Partial<Item> & {
+    preferredQty?: number;
+    offers?: Array<
+      Partial<VendorOffer> & {
+        unitPrice?: number;
+        moq?: number;
+        shippingFlat?: number;
+        shippingPerUnit?: number;
+      }
+    >;
+  }
+): Item {
+  const preferredQty = raw.preferredQty ?? DEFAULT_UNITS;
+  return {
+    id: raw.id || newId("item"),
+    sku: raw.sku ?? "",
+    name: raw.name ?? "",
+    categoryId: raw.categoryId || UNCATEGORIZED_ID,
+    primaryImageUrl: raw.primaryImageUrl,
+    notes: raw.notes,
+    unit: raw.unit || DEFAULT_UNIT,
+    offers: (raw.offers ?? []).map((o) => normalizeOffer(o, preferredQty)),
+  };
 }
 
 export function ensureUncategorized(categories: Category[]): Category[] {
@@ -139,7 +207,7 @@ export function parseCatalogFromRows(
   }
 
   const idx = headerIndex(rows[0]);
-  const byItemKey = new Map<string, Item>();
+  const byItemKey = new Map<string, Item & { preferredQty?: number }>();
 
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];
@@ -164,7 +232,7 @@ export function parseCatalogFromRows(
           undefined,
         notes: cell(row, idx, "notes") || undefined,
         unit: cell(row, idx, "unit") || DEFAULT_UNIT,
-        preferredQty: num(cell(row, idx, "preferredQty"), DEFAULT_PREFERRED_QTY),
+        preferredQty: num(cell(row, idx, "preferredQty"), DEFAULT_UNITS),
         offers: [],
       };
       byItemKey.set(key, item);
@@ -181,35 +249,45 @@ export function parseCatalogFromRows(
       continue;
     }
 
-    const offer: VendorOffer = {
-      id: newId("offer"),
-      vendor,
-      vendorSku: cell(row, idx, "vendorSku") || undefined,
-      imageUrl:
-        cell(row, idx, "imageUrl") ||
-        cell(row, idx, "imagePath") ||
-        undefined,
-      unitPrice: num(cell(row, idx, "unitPrice"), 0),
-      currency: cell(row, idx, "currency") || DEFAULT_CURRENCY,
-      moq: Math.max(1, num(cell(row, idx, "moq"), 1)),
-      shippingFlat: num(cell(row, idx, "shippingFlat"), 0),
-      shippingPerUnit: num(cell(row, idx, "shippingPerUnit"), 0),
-      notes:
-        cell(row, idx, "vendorNotes") ||
-        cell(row, idx, "offerNotes") ||
-        undefined,
-      leadDays: cell(row, idx, "leadDays")
-        ? num(cell(row, idx, "leadDays"), 0)
-        : undefined,
-      url: cell(row, idx, "url") || undefined,
-      lastChecked: cell(row, idx, "lastChecked") || undefined,
-    };
+    const preferredQty = item.preferredQty ?? DEFAULT_UNITS;
+    const totalRaw = cell(row, idx, "totalPrice");
+    const unitsRaw =
+      cell(row, idx, "units") || cell(row, idx, "qty") || cell(row, idx, "quantity");
+
+    const offer = normalizeOffer(
+      {
+        id: newId("offer"),
+        vendor,
+        vendorSku: cell(row, idx, "vendorSku") || undefined,
+        imageUrl:
+          cell(row, idx, "imageUrl") ||
+          cell(row, idx, "imagePath") ||
+          undefined,
+        totalPrice: totalRaw !== "" ? num(totalRaw, 0) : undefined,
+        units: unitsRaw !== "" ? Math.max(1, num(unitsRaw, DEFAULT_UNITS)) : undefined,
+        unitPrice: num(cell(row, idx, "unitPrice"), 0),
+        currency: cell(row, idx, "currency") || DEFAULT_CURRENCY,
+        moq: Math.max(1, num(cell(row, idx, "moq"), 1)),
+        shippingFlat: num(cell(row, idx, "shippingFlat"), 0),
+        shippingPerUnit: num(cell(row, idx, "shippingPerUnit"), 0),
+        notes:
+          cell(row, idx, "vendorNotes") ||
+          cell(row, idx, "offerNotes") ||
+          undefined,
+        leadDays: cell(row, idx, "leadDays")
+          ? num(cell(row, idx, "leadDays"), 0)
+          : undefined,
+        url: cell(row, idx, "url") || undefined,
+        lastChecked: cell(row, idx, "lastChecked") || undefined,
+      },
+      preferredQty
+    );
     item.offers.push(offer);
   }
 
   return {
     categories: ensureUncategorized(categories),
-    items: Array.from(byItemKey.values()),
+    items: Array.from(byItemKey.values()).map((item) => normalizeItem(item)),
   };
 }
 
@@ -226,15 +304,12 @@ export function catalogToRows(catalog: Catalog): CsvRows {
         item.primaryImageUrl ?? "",
         item.notes ?? "",
         item.unit,
-        item.preferredQty,
+        "",
         "",
         "",
         "",
         "",
         DEFAULT_CURRENCY,
-        "",
-        "",
-        "",
         "",
         "",
         "",
@@ -252,15 +327,12 @@ export function catalogToRows(catalog: Catalog): CsvRows {
         item.primaryImageUrl ?? "",
         item.notes ?? "",
         item.unit,
-        item.preferredQty,
         offer.vendor,
         offer.vendorSku ?? "",
         offer.imageUrl ?? "",
-        offer.unitPrice,
+        offer.totalPrice,
+        offer.units,
         offer.currency || DEFAULT_CURRENCY,
-        offer.moq,
-        offer.shippingFlat,
-        offer.shippingPerUnit,
         offer.notes ?? "",
         offer.leadDays ?? "",
         offer.url ?? "",
